@@ -1,236 +1,222 @@
-# 🎉 DEPLOY CONCLUÍDO COM SUCESSO!
+# ✅ DEPLOY REALIZADO COM SUCESSO!
 
-**Data/Hora:** ${new Date().toLocaleString('pt-BR')}
+## 🚀 Status do Deploy
+
+**Data/Hora:** 27/04/2026 19:12
+**Plataforma:** SquareCloud
+**Status:** ✅ RUNNING
+
+### 📊 Informações da Aplicação:
+
+```
+Nome: Cloud SelfBot Manager
+App ID: e0d4fc377f3840919e659646c26108c7
+Memória: 512MB
+Cluster: argon-cluster
+Linguagem: JavaScript (Node.js)
+Status: RUNNING
+CPU: 0%
+RAM: 19.87MB
+Disco: 7.08MB
+```
+
+### 🌐 URLs de Acesso:
+
+**Painel Admin:**
+```
+https://cloudselfbot.squareweb.app/
+```
+
+**Painel Cliente:**
+```
+https://cloudselfbot.squareweb.app/cliente
+```
+
+**API:**
+```
+https://cloudselfbot.squareweb.app/api/users
+```
 
 ---
 
-## ✅ STATUS: DEPLOY BEM-SUCEDIDO!
+## ✅ O que foi deployado:
 
-### 🚀 GitHub
-- **Repositório:** https://github.com/diaszzdev0/SELFBOT00
-- **Branch:** main
-- **Último commit:** "Integração completa com Neon PostgreSQL - Deploy atualizado"
-- **Status:** ✅ Sincronizado
-
-### 🗄️ Banco de Dados Neon
-- **Conexão:** ✅ Ativa
-- **Tabelas:** ✅ Criadas (admin_users, users, rooms)
-- **Admin:** ✅ Configurado (Cloud/Dev0)
-- **Status:** ✅ Operacional
-
-### ☁️ Servidor SquareCloud
-- **Status:** ✅ CONECTADO E FUNCIONANDO
-- **Conexões ativas:** 1 (pgbouncer)
-- **Banco de dados:** ✅ Conectado ao Neon
-- **Pronto para uso:** ✅ SIM
-
----
-
-## 📊 Resumo Técnico
-
-### Arquivos Deployados:
-- ✅ `server.js` - Servidor com PostgreSQL
-- ✅ `database.js` - Módulo de banco de dados
-- ✅ `package.json` - Dependências (pg, dotenv, express)
+### Backend (Node.js):
+- ✅ `server.js` - Servidor Express com rotas atualizadas
+- ✅ `database.js` - Banco de dados com tabela user_configs
 - ✅ `painel.html` - Painel administrativo
 - ✅ `cliente.html` - Painel do cliente
-- ✅ Todos os arquivos de configuração
+- ✅ `package.json` - Dependências
+- ✅ `squarecloud.config` - Configuração da SquareCloud
+- ✅ `start.sh` - Script de inicialização
 
-### Estrutura do Banco:
-```sql
-admin_users → 1 registro  (Cloud/Dev0)
-users       → 0 registros (pronto para usar)
-rooms       → 0 registros (pronto para usar)
-```
-
-### Conexões:
-- ✅ SquareCloud → Neon PostgreSQL
-- ✅ Pooler ativo (pgbouncer)
-- ✅ SSL/TLS habilitado
+### Funcionalidades Ativas:
+- ✅ Sistema de autenticação
+- ✅ Gerenciamento de usuários e keys
+- ✅ Gerenciamento de salas
+- ✅ Persistência de configurações no PostgreSQL (Neon)
+- ✅ API REST completa
 
 ---
 
-## 🎯 SISTEMA 100% OPERACIONAL!
+## ⚠️ IMPORTANTE: Bot Python
 
-### ✅ Tudo Funcionando:
-- ✅ Código atualizado no GitHub
-- ✅ Servidor rodando na SquareCloud
-- ✅ Banco de dados conectado ao Neon
-- ✅ Tabelas criadas e prontas
-- ✅ Admin configurado
-- ✅ API REST funcionando
-- ✅ Painéis acessíveis
+O **bot Python NÃO está rodando** na SquareCloud. Você precisa executá-lo separadamente:
 
----
-
-## 🧪 TESTE AGORA!
-
-### 1. Acesse o Painel Admin
-- **URL:** Encontre no painel da SquareCloud
-- **Login:** `Cloud`
-- **Senha:** `Dev0`
-
-### 2. Crie um Usuário de Teste
-1. Selecione o plano (Semanal/Mensal/Permanente)
-2. Clique em "Gerar Key"
-3. Preencha o username
-4. Defina quantidade de salas
-5. Clique em "Criar Usuário"
-
-### 3. Verifique se Foi Salvo
-Execute localmente:
-```bash
-node verify-deploy.js
-```
-
-Ou acesse o Neon Console:
-```sql
-SELECT * FROM users;
-```
-
-### 4. Teste o Painel Cliente
-- **URL:** `sua-url/cliente`
-- **Login:** Use o usuário que você criou
-- **Key:** Use a key gerada
-
----
-
-## 🔄 Para Futuros Updates
-
-Sempre que modificar o código:
+### Como executar o bot:
 
 ```bash
-git add .
-git commit -m "descrição da mudança"
-git push
+cd "c:\Users\Usuario\Desktop\ultima tentativa"
+python bot.py
 ```
 
-**Se você configurou a integração GitHub + SquareCloud:**
-- ✅ Deploy será automático
-- ✅ Servidor reiniciará automaticamente
-- ✅ Mudanças aplicadas em ~1 minuto
+### O que o bot faz:
+- ✅ Envia mensagens automáticas nas threads
+- ✅ Valida pagamentos via comando `pg Nome`
+- ✅ Busca emails no IMAP
+- ✅ Logs detalhados de todas as operações
 
-**Se não configurou:**
-- Faça upload manual do ZIP
-- Ou configure a integração agora
+### Logs esperados ao iniciar:
+```
+✅ Logged in as SeuUsuario#1234
+📋 Monitorando servidor ID: 123456789
+📋 Monitorando categoria ID: 987654321
+💬 Mensagem configurada: Olá! Digite: pago Nome Sobrenome...
+🖼️ Imagem configurada: https://exemplo.com/imagem.png
+⏳ Aguardando criação de threads...
+```
 
 ---
 
-## 🔐 Segurança (IMPORTANTE)
+## 🧪 Testes Recomendados
 
-### Antes de Usar em Produção:
+### 1. Testar Painel Admin
+1. Acesse: https://cloudselfbot.squareweb.app/
+2. Login: `Cloud` / Senha: `Dev0`
+3. Crie um usuário de teste
+4. Gere uma key
 
-**1. Altere a senha do admin:**
-```sql
--- No Neon Console, execute:
-UPDATE admin_users 
-SET password = 'SuaSenhaForte123!' 
-WHERE username = 'Cloud';
-```
+### 2. Testar Painel Cliente
+1. Acesse: https://cloudselfbot.squareweb.app/cliente
+2. Faça login com o usuário criado
+3. Configure o token do Discord
+4. Salve as configurações
+5. Verifique se salvou no banco (recarregue a página)
 
-**2. Proteja suas credenciais:**
-- ✅ `.env` não está no GitHub (já configurado)
-- ✅ DATABASE_URL está como variável de ambiente
-- ⚠️ Nunca compartilhe a connection string
-
-**3. Monitore o uso:**
-- SquareCloud: Logs e métricas
-- Neon Console: Queries e uso do banco
+### 3. Testar Bot Python
+1. Execute: `python bot.py`
+2. Crie uma thread na categoria configurada
+3. Aguarde 9 segundos
+4. Verifique se a mensagem foi enviada
+5. Digite: `pg Nome` para testar validação
 
 ---
 
 ## 📊 Monitoramento
 
-### SquareCloud Dashboard:
-- 📈 CPU e Memória
-- 📝 Logs em tempo real
-- 🔄 Status da aplicação
-- 🔗 URL da aplicação
-
-### Neon Console:
-- 📊 Queries executadas
-- 💾 Uso de armazenamento
-- 🔍 Dados em tempo real
-- 📈 Performance
-
-### Scripts Locais:
+### Ver logs do servidor:
 ```bash
-node verify-deploy.js  # Status completo
-node check-server.js   # Atividade recente
-node check-tables.js   # Ver tabelas
-npm run test-db        # Testar conexão
+squarecloud app logs e0d4fc377f3840919e659646c26108c7
+```
+
+### Ver status:
+```bash
+squarecloud app status e0d4fc377f3840919e659646c26108c7
+```
+
+### Reiniciar aplicação:
+```bash
+squarecloud app restart e0d4fc377f3840919e659646c26108c7
 ```
 
 ---
 
-## 🎁 Recursos Disponíveis
+## 🔄 Próximas Atualizações
 
-### Painéis:
-- ✅ Painel Admin (`/`)
-- ✅ Painel Cliente (`/cliente`)
+Para atualizar o servidor:
 
-### API REST:
-- ✅ `/api/admin/login` - Login admin
-- ✅ `/api/users` - CRUD de usuários
-- ✅ `/api/rooms` - CRUD de salas
+```bash
+# 1. Fazer mudanças nos arquivos
+# 2. Recriar o zip
+powershell -Command "Compress-Archive -Path 'server.js','database.js','painel.html','cliente.html','package.json','squarecloud.config','start.sh' -DestinationPath 'deploy-final.zip' -Force"
 
-### Funcionalidades:
-- ✅ Geração de keys
-- ✅ Gerenciamento de usuários
-- ✅ Controle de planos
-- ✅ Gerenciamento de salas
-- ✅ Sistema de logs
-- ✅ Integração Discord (configurável)
+# 3. Fazer commit
+squarecloud commit --file deploy-final.zip --restart
+```
 
 ---
 
-## 📚 Documentação
+## 🆘 Troubleshooting
 
-### Guias Criados:
-- `README.md` - Documentação principal
-- `API_EXAMPLES.md` - Exemplos de código
-- `SECURITY.md` - Boas práticas
-- `NEON_SETUP.md` - Setup do banco
-- `DEPLOY_GITHUB.md` - Deploy via GitHub
+### Servidor não responde:
+```bash
+# Ver logs
+squarecloud app logs e0d4fc377f3840919e659646c26108c7
 
-### Scripts Úteis:
-- `verify-deploy.js` - Verificar deploy
-- `check-server.js` - Status do servidor
-- `check-tables.js` - Ver tabelas
-- `test-db.js` - Testar conexão
-- `migrate.js` - Migrar dados antigos
+# Reiniciar
+squarecloud app restart e0d4fc377f3840919e659646c26108c7
+```
 
----
+### Erro de banco de dados:
+- Verifique se a variável `DATABASE_URL` está configurada no painel da SquareCloud
+- Acesse: https://squarecloud.app/dashboard
+- Vá em "Environment Variables"
+- Adicione: `DATABASE_URL=sua_connection_string_neon`
 
-## 🎉 PARABÉNS!
-
-Seu sistema está **100% operacional** com:
-
-- ✅ Servidor na nuvem (SquareCloud)
-- ✅ Banco de dados na nuvem (Neon)
-- ✅ Código versionado (GitHub)
-- ✅ Deploy automatizado
-- ✅ Dados persistentes e seguros
-- ✅ Backup automático
-- ✅ SSL/TLS obrigatório
-- ✅ Pronto para produção!
+### Bot não funciona:
+- O bot Python precisa rodar separadamente
+- Execute: `python bot.py`
+- Veja o guia: [TROUBLESHOOTING_THREADS.md](TROUBLESHOOTING_THREADS.md)
 
 ---
 
-## 🚀 Próximos Passos
+## ✅ Checklist Pós-Deploy
 
-1. ✅ **Teste o sistema** - Crie usuários e salas
-2. ✅ **Altere a senha do admin** - Segurança
-3. ✅ **Configure integração GitHub** - Deploy automático
-4. ✅ **Monitore o uso** - Logs e métricas
-5. ✅ **Comece a usar!** - Distribua as keys
+- [x] Servidor deployado na SquareCloud
+- [x] Aplicação rodando (status: RUNNING)
+- [x] Painel admin acessível
+- [x] Painel cliente acessível
+- [ ] Variável DATABASE_URL configurada
+- [ ] Bot Python executando localmente
+- [ ] Teste de envio de mensagem em thread
+- [ ] Teste de comando `pg Nome`
+- [ ] Teste de persistência de configurações
 
 ---
 
-**Sistema pronto para uso! Boa sorte! 🎉🚀**
+## 📞 Comandos Úteis
+
+```bash
+# Status
+squarecloud app status e0d4fc377f3840919e659646c26108c7
+
+# Logs
+squarecloud app logs e0d4fc377f3840919e659646c26108c7
+
+# Reiniciar
+squarecloud app restart e0d4fc377f3840919e659646c26108c7
+
+# Parar
+squarecloud app stop e0d4fc377f3840919e659646c26108c7
+
+# Iniciar
+squarecloud app start e0d4fc377f3840919e659646c26108c7
+
+# Atualizar
+squarecloud commit --file deploy-final.zip --restart
+```
 
 ---
 
-**Repositório:** https://github.com/diaszzdev0/SELFBOT00
-**Status:** ✅ OPERACIONAL
-**Última atualização:** ${new Date().toLocaleString('pt-BR')}
+## 🎉 Sucesso!
+
+Seu servidor está rodando na SquareCloud!
+
+**Próximo passo:** Execute o bot Python localmente com `python bot.py`
+
+---
+
+**Versão:** 1.2.0
+**Deploy ID:** e0d4fc377f3840919e659646c26108c7
+**Data:** 27/04/2026 19:12
+**Status:** ✅ ONLINE
