@@ -1,0 +1,54 @@
+╔════════════════════════════════════════════════════════════╗
+║          ✅ ATUALIZAÇÃO PRONTA - BOT MULTI-USUÁRIO        ║
+╚════════════════════════════════════════════════════════════╝
+
+📦 Arquivo: deploy-squarecloud.zip
+🌐 Dashboard aberto no navegador
+
+┌─────────────────────────────────────────────────────────┐
+│ O QUE FOI ATUALIZADO:                                   │
+└─────────────────────────────────────────────────────────┘
+
+✓ Bot agora lê configurações do BANCO DE DADOS
+✓ Suporta MÚLTIPLOS USUÁRIOS simultaneamente
+✓ Cada usuário configura pelo painel do cliente
+✓ Mensagens enviadas automaticamente nas threads
+✓ Dependência asyncpg adicionada (PostgreSQL)
+
+┌─────────────────────────────────────────────────────────┐
+│ COMO FAZER O UPLOAD:                                    │
+└─────────────────────────────────────────────────────────┘
+
+1. Na página que abriu, clique em "COMMIT" ou "Upload"
+2. Selecione: deploy-squarecloud.zip
+3. Aguarde o upload completar
+4. Aplicação será reiniciada automaticamente
+
+┌─────────────────────────────────────────────────────────┐
+│ COMO FUNCIONA AGORA:                                    │
+└─────────────────────────────────────────────────────────┘
+
+1. Usuário acessa: /cliente
+2. Faz login com sua chave
+3. Configura:
+   - Token Discord
+   - Server ID
+   - Category ID
+   - Mensagem da thread
+   - Email IMAP
+4. Salva no banco de dados
+5. Bot carrega automaticamente e começa a funcionar
+
+┌─────────────────────────────────────────────────────────┐
+│ VERIFICAR LOGS:                                         │
+└─────────────────────────────────────────────────────────┘
+
+Procure por:
+✅ X configurações carregadas
+✅ Bot conectado: Usuario#1234 (User: chave_usuario)
+✅ Mensagem enviada na thread: nome_da_thread
+
+╔════════════════════════════════════════════════════════════╗
+║ IMPORTANTE: Não precisa mais configurar .env!             ║
+║ Tudo é configurado pelo painel do cliente agora.          ║
+╚════════════════════════════════════════════════════════════╝
