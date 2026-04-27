@@ -1,0 +1,44 @@
+# ════════════════════════════════════════════════════════════
+# VARIÁVEIS DE AMBIENTE - COPIE E COLE NA SQUARECLOUD
+# ════════════════════════════════════════════════════════════
+#
+# Vá em: Settings > Environment Variables
+# Cole as variáveis abaixo (substitua os valores)
+#
+
+DATABASE_URL=postgresql://neondb_owner:npg_3RJa4bcMnUKm@ep-silent-cloud-anryyduw-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+DISCORD_TOKEN=COLE_SEU_TOKEN_AQUI
+
+SERVER_ID=COLE_O_ID_DO_SERVIDOR_AQUI
+
+CATEGORY_ID=COLE_O_ID_DA_CATEGORIA_AQUI
+
+EMAIL_USER=COLE_SEU_EMAIL_AQUI
+
+EMAIL_PASS=COLE_A_SENHA_DE_APP_AQUI
+
+IMAP_SERVER=imap.gmail.com
+
+THREAD_MESSAGE=Olá! Digite: pago Nome Sobrenome para validar seu pagamento de hoje.
+
+THREAD_IMAGE=
+
+# ════════════════════════════════════════════════════════════
+# COMO PEGAR CADA VALOR:
+# ════════════════════════════════════════════════════════════
+#
+# DISCORD_TOKEN:
+#   1. Abra Discord no navegador
+#   2. Pressione F12 > Network > Ctrl+R
+#   3. Procure "authorization" nos headers
+#
+# SERVER_ID e CATEGORY_ID:
+#   1. Ative Modo Desenvolvedor (Configurações > Avançado)
+#   2. Clique direito no servidor/categoria > Copiar ID
+#
+# EMAIL_PASS:
+#   1. Acesse: https://myaccount.google.com/apppasswords
+#   2. Gere uma senha de app (16 caracteres)
+#
+# ════════════════════════════════════════════════════════════

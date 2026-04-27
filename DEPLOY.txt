@@ -1,0 +1,58 @@
+╔════════════════════════════════════════════════════════════╗
+║          🚀 DEPLOY SQUARECLOUD - GUIA RÁPIDO              ║
+╚════════════════════════════════════════════════════════════╝
+
+📦 ARQUIVO PRONTO: deploy-squarecloud.zip
+
+┌─────────────────────────────────────────────────────────┐
+│ PASSO 1: ACESSE O DASHBOARD                             │
+└─────────────────────────────────────────────────────────┘
+🌐 https://squarecloud.app/dashboard
+
+┌─────────────────────────────────────────────────────────┐
+│ PASSO 2: FAÇA UPLOAD                                    │
+└─────────────────────────────────────────────────────────┘
+1. Clique em "Upload" ou "Commit"
+2. Selecione: deploy-squarecloud.zip
+3. Aguarde o upload completar
+
+┌─────────────────────────────────────────────────────────┐
+│ PASSO 3: CONFIGURE VARIÁVEIS DE AMBIENTE                │
+└─────────────────────────────────────────────────────────┘
+Vá em Settings > Environment Variables e adicione:
+
+DATABASE_URL=postgresql://neondb_owner:npg_3RJa4bcMnUKm@ep-silent-cloud-anryyduw-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+DISCORD_TOKEN=seu_token_aqui
+SERVER_ID=seu_server_id_aqui
+CATEGORY_ID=seu_category_id_aqui
+
+EMAIL_USER=seu_email@gmail.com
+EMAIL_PASS=sua_senha_app_aqui
+IMAP_SERVER=imap.gmail.com
+
+THREAD_MESSAGE=Olá! Digite: pago Nome Sobrenome para validar seu pagamento de hoje.
+THREAD_IMAGE=
+
+┌─────────────────────────────────────────────────────────┐
+│ PASSO 4: REINICIE A APLICAÇÃO                           │
+└─────────────────────────────────────────────────────────┘
+Clique em "Restart" ou "Start"
+
+┌─────────────────────────────────────────────────────────┐
+│ PASSO 5: VERIFIQUE OS LOGS                              │
+└─────────────────────────────────────────────────────────┘
+Procure por:
+✅ Instalando dependências Node.js...
+✅ Instalando dependências Python...
+✅ Iniciando bot Python em background...
+✅ Iniciando servidor Node.js...
+✅ Bot conectado como: SeuUsuario#1234
+
+╔════════════════════════════════════════════════════════════╗
+║ ⚠️  IMPORTANTE                                             ║
+╠════════════════════════════════════════════════════════════╣
+║ Se o Python não funcionar, a SquareCloud pode não         ║
+║ suportar Python + Node.js juntos. Nesse caso, crie        ║
+║ 2 aplicações separadas (uma para cada).                   ║
+╚════════════════════════════════════════════════════════════╝

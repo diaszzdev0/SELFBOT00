@@ -1,0 +1,32 @@
+╔════════════════════════════════════════════════════════════╗
+║          🔄 ATUALIZAR APLICAÇÃO EXISTENTE                 ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ Arquivo pronto: deploy-squarecloud.zip
+✅ Dashboard aberto no navegador
+
+┌─────────────────────────────────────────────────────────┐
+│ INSTRUÇÕES RÁPIDAS:                                     │
+└─────────────────────────────────────────────────────────┘
+
+1. Na página da sua aplicação, clique em "COMMIT"
+
+2. Arraste ou selecione: deploy-squarecloud.zip
+
+3. Aguarde o upload e deploy automático
+
+4. Verifique os logs para confirmar:
+   ✅ Bot Python iniciado
+   ✅ Servidor Node.js rodando
+
+┌─────────────────────────────────────────────────────────┐
+│ O QUE FOI ATUALIZADO:                                   │
+└─────────────────────────────────────────────────────────┘
+
+✓ start.sh - Agora inicia Python + Node.js
+✓ squarecloud.config - Instala Python3 e pip
+✓ Arquivos organizados e limpos
+
+╔════════════════════════════════════════════════════════════╗
+║ Pronto! Só fazer o commit do arquivo ZIP.                 ║
+╚════════════════════════════════════════════════════════════╝
