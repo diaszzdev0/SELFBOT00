@@ -1,0 +1,27 @@
+{
+  "name": "cloud-selfbot-manager",
+  "version": "1.0.0",
+  "description": "Sistema de gerenciamento de selfbots com painel admin e cliente",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test-db": "node test-db.js",
+    "check-tables": "node check-tables.js",
+    "test-prod": "node test-production.js",
+    "migrate": "node migrate.js",
+    "deploy": "squarecloud commit",
+    "logs": "squarecloud logs",
+    "status": "squarecloud status"
+  },
+  "keywords": ["selfbot", "discord", "manager", "painel"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

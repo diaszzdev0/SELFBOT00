@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Deploy SquareCloud",
+      "type": "shell",
+      "command": "npm run deploy",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Ver Logs SquareCloud",
+      "type": "shell",
+      "command": "npm run logs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Status SquareCloud",
+      "type": "shell",
+      "command": "npm run status",
+      "problemMatcher": []
+    }
+  ]
+}

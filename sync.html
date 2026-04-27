@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sincronizar Dados - Cloud Manager</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  p {
+    color: #94a3b8;
+    font-size: .9rem;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .info-box {
+    background: rgba(59,130,246,.1);
+    border: 1px solid rgba(59,130,246,.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: .85rem;
+  }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: filter .2s;
+  }
+  .btn:hover { filter: brightness(1.15); }
+  .btn-success { background: #10b981; }
+  .status {
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: .9rem;
+    margin-top: 16px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.success { background: rgba(16,185,129,.15); color: #10b981; }
+  .status.error { background: rgba(239,68,68,.15); color: #ef4444; }
+  .users-list {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .user-item {
+    padding: 12px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: .85rem;
+  }
+  .user-item strong { color: #3b82f6; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🔄 Sincronizar Dados</h1>
+  <p>Use esta página para sincronizar os dados entre o painel admin e o painel cliente no celular.</p>
+
+  <div class="info-box">
+    <strong>📱 Como usar no celular:</strong><br>
+    1. Abra esta página no PC e clique em "Gerar Código"<br>
+    2. Copie o código gerado<br>
+    3. Abra esta página no celular<br>
+    4. Cole o código e clique em "Importar Dados"
+  </div>
+
+  <button class="btn" onclick="generateCode()">📤 Gerar Código de Sincronização</button>
+  
+  <textarea id="sync-code" 
+    style="width:100%;min-height:120px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;color:#e2e8f0;font-family:monospace;font-size:.8rem;margin-bottom:12px;resize:vertical"
+    placeholder="Cole aqui o código de sincronização..."></textarea>
+
+  <button class="btn btn-success" onclick="importCode()">📥 Importar Dados</button>
+
+  <div id="status" class="status"></div>
+
+  <div id="users-list" class="users-list" style="display:none">
+    <h3 style="margin-bottom:12px;font-size:.95rem">Usuários Sincronizados:</h3>
+    <div id="users-content"></div>
+  </div>
+</div>
+
+<script>
+  function generateCode() {
+    const keys = localStorage.getItem('cloudManagerKeys');
+    if (!keys) {
+      showStatus('Nenhum dado encontrado! Gere usuários no painel admin primeiro.', 'error');
+      return;
+    }
+
+    const data = JSON.parse(keys);
+    const code = btoa(JSON.stringify(data)); // Codifica em base64
+    document.getElementById('sync-code').value = code;
+    
+    showStatus(`✅ Código gerado! ${data.length} usuário(s) prontos para sincronizar.`, 'success');
+    displayUsers(data);
+  }
+
+  function importCode() {
+    const code = document.getElementById('sync-code').value.trim();
+    if (!code) {
+      showStatus('Cole o código de sincronização primeiro!', 'error');
+      return;
+    }
+
+    try {
+      const data = JSON.parse(atob(code)); // Decodifica base64
+      
+      // Salva em múltiplos locais
+      localStorage.setItem('cloudManagerKeys', JSON.stringify(data));
+      sessionStorage.setItem('cloudManagerKeys', JSON.stringify(data));
+      localStorage.setItem('cloudManagerUsers', JSON.stringify(data));
+      localStorage.setItem('users', JSON.stringify(data));
+
+      showStatus(`✅ Dados importados com sucesso! ${data.length} usuário(s) sincronizados.`, 'success');
+      displayUsers(data);
+
+      // Limpa o textarea após 2 segundos
+      setTimeout(() => {
+        document.getElementById('sync-code').value = '';
+      }, 2000);
+    } catch(e) {
+      showStatus('❌ Código inválido! Verifique se copiou corretamente.', 'error');
+    }
+  }
+
+  function showStatus(msg, type) {
+    const status = document.getElementById('status');
+    status.textContent = msg;
+    status.className = `status show ${type}`;
+    setTimeout(() => status.classList.remove('show'), 5000);
+  }
+
+  function displayUsers(users) {
+    const list = document.getElementById('users-list');
+    const content = document.getElementById('users-content');
+    
+    content.innerHTML = '';
+    users.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'user-item';
+      div.innerHTML = `
+        <strong>${u.user}</strong><br>
+        Plano: ${u.plan} | Salas: ${u.salas}<br>
+        <span style="color:#94a3b8;font-size:.75rem">Key: ${u.key}</span>
+      `;
+      content.appendChild(div);
+    });
+    
+    list.style.display = 'block';
+  }
+
+  // Verifica se há dados ao carregar
+  window.addEventListener('load', () => {
+    const keys = localStorage.getItem('cloudManagerKeys');
+    if (keys) {
+      const data = JSON.parse(keys);
+      displayUsers(data);
+    }
+  });
+</script>
+
+</body>
+</html>

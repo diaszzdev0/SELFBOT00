@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Manager</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg:        #0f172a;
+    --card:      #1e293b;
+    --border:    #334155;
+    --text:      #e2e8f0;
+    --muted:     #94a3b8;
+    --blue:      #3b82f6;
+    --green:     #10b981;
+    --red:       #ef4444;
+    --blue-dim:  #1d4ed8;
+    --green-dim: #059669;
+    --red-dim:   #dc2626;
+    --radius:    10px;
+    --sidebar-w: 240px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    width: var(--sidebar-w);
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 20px;
+    gap: 32px;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--blue);
+  }
+
+  .brand i { font-size: 1.4rem; }
+
+  .sidebar-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .sidebar-card .label {
+    font-size: .75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-card .count {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .sidebar-card .sub {
+    font-size: .75rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 4px;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .3; }
+  }
+
+  nav { display: flex; flex-direction: column; gap: 4px; }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: .9rem;
+    transition: background .2s, color .2s;
+  }
+
+  nav a.active, nav a:hover {
+    background: rgba(59,130,246,.15);
+    color: var(--blue);
+  }
+
+  /* ── Main ── */
+  main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* ── Top stats ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.blue  { background: rgba(59,130,246,.15);  color: var(--blue); }
+  .stat-icon.green { background: rgba(16,185,129,.15);  color: var(--green); }
+  .stat-icon.red   { background: rgba(239,68,68,.15);   color: var(--red); }
+
+  .stat-info .val  { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+  .stat-info .lbl  { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+
+  /* ── Generator ── */
+  .generator {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+
+  .section-title i { color: var(--blue); }
+
+  .gen-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  select, .btn {
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: .9rem;
+    cursor: pointer;
+    outline: none;
+  }
+
+  select {
+    background: var(--bg);
+    color: var(--text);
+    padding: 0 14px;
+    min-width: 180px;
+  }
+
+  .btn {
+    padding: 0 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: filter .2s, transform .1s;
+    border: none;
+  }
+
+  .btn:active { transform: scale(.97); }
+  .btn:hover  { filter: brightness(1.15); }
+
+  .btn-blue  { background: var(--blue);  color: #fff; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-red   { background: var(--red);   color: #fff; }
+
+  .btn-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: none;
+    display: grid;
+    place-items: center;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: filter .2s, transform .1s;
+  }
+
+  .btn-icon:active { transform: scale(.9); }
+  .btn-icon:hover  { filter: brightness(1.2); }
+  .btn-icon.blue   { background: rgba(59,130,246,.2);  color: var(--blue); }
+  .btn-icon.green  { background: rgba(16,185,129,.2);  color: var(--green); }
+  .btn-icon.red    { background: rgba(239,68,68,.2);   color: var(--red); }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+  }
+
+  thead th {
+    padding: 12px 20px;
+    text-align: left;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    background: rgba(0,0,0,.2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,.03); }
+
+  td { padding: 14px 20px; vertical-align: middle; }
+
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(59,130,246,.2);
+    color: var(--blue);
+    display: grid;
+    place-items: center;
+    font-size: .75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .key-badge {
+    font-family: 'Courier New', monospace;
+    background: rgba(0,0,0,.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: .82rem;
+    letter-spacing: .05em;
+  }
+
+  .plan-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  .plan-badge.semanal   { background: rgba(59,130,246,.15);  color: var(--blue); }
+  .plan-badge.mensal    { background: rgba(16,185,129,.15);  color: var(--green); }
+  .plan-badge.permanente{ background: rgba(239,68,68,.15);   color: var(--red); }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+    background: rgba(16,185,129,.15);
+    color: var(--green);
+  }
+
+  .actions { display: flex; gap: 6px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .88rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: transform .3s, opacity .3s;
+    z-index: 999;
+    min-width: 260px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast i { font-size: 1rem; }
+  #toast.success i { color: var(--green); }
+  #toast.error   i { color: var(--red); }
+  #toast.info    i { color: var(--blue); }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+
+  .empty i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: .4; }
+
+  /* ── Login ── */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+
+  .login-brand {
+    text-align: center;
+  }
+
+  .login-brand i {
+    font-size: 2.4rem;
+    color: var(--blue);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .login-brand h1 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .login-brand p {
+    font-size: .82rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .login-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .login-field label {
+    font-size: .78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-wrap i {
+    position: absolute;
+    left: 13px;
+    color: var(--muted);
+    font-size: .9rem;
+    pointer-events: none;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    height: 44px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: .9rem;
+    padding: 0 40px 0 38px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .input-wrap input:focus { border-color: var(--blue); }
+
+  .toggle-pass {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .9rem;
+    padding: 0;
+    transition: color .2s;
+  }
+
+  .toggle-pass:hover { color: var(--text); }
+
+  .login-error {
+    font-size: .82rem;
+    color: var(--red);
+    text-align: center;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .login-error.show { opacity: 1; }
+
+  .btn-login {
+    width: 100%;
+    height: 46px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: filter .2s, transform .1s;
+  }
+
+  .btn-login:hover  { filter: brightness(1.15); }
+  .btn-login:active { transform: scale(.98); }
+
+  /* ── Modal ── */
+  #modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+  }
+  #modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+  .modal-box h3 { font-size: 1rem; font-weight: 700; display:flex; align-items:center; gap:8px; }
+  .modal-box h3 i { color: var(--green); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  section { display: flex; flex-direction: column; gap: 28px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    aside { width: 60px; padding: 20px 10px; }
+    .brand span, .sidebar-card .label,
+    .sidebar-card .sub, nav a span { display: none; }
+    .sidebar-card .count { font-size: 1.4rem; }
+    main { margin-left: 60px; padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Login Screen ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-brand">
+      <i class="fa-solid fa-cloud"></i>
+      <h1>Cloud Manager</h1>
+      <p>Painel Administrativo</p>
+    </div>
+
+    <div class="login-field">
+      <label>Usuário</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input id="login-user" type="text" placeholder="Digite seu usuário" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label>Senha</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-lock"></i>
+        <input id="login-pass" type="password" placeholder="Digite sua senha">
+        <button class="toggle-pass" onclick="togglePass()" tabindex="-1">
+          <i id="eye-icon" class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="login-error" id="login-error">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <span>Usuário ou senha incorretos.</span>
+    </div>
+
+    <button class="btn-login" onclick="doLogin()">
+      <i class="fa-solid fa-right-to-bracket"></i> Entrar
+    </button>
+  </div>
+</div>
+
+<!-- ── Sidebar ── -->
+<aside>
+  <div class="brand">
+    <i class="fa-solid fa-cloud"></i>
+    <span>Cloud Manager</span>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="label"><span class="dot"></span>Selfbots Online</div>
+    <div class="count" id="sidebar-count">0</div>
+    <div class="sub">instâncias ativas</div>
+  </div>
+
+  <nav>
+    <a href="#" class="active" onclick="navigate('dashboard',this)"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
+    <a href="#" onclick="navigate('keys',this)"><i class="fa-solid fa-key"></i><span>Keys</span></a>
+    <a href="#" onclick="navigate('usuarios',this)"><i class="fa-solid fa-users"></i><span>Usuários</span></a>
+    <a href="#" onclick="navigate('api',this)"><i class="fa-solid fa-plug"></i><span>API Salas</span></a>
+    <a href="#" onclick="navigate('config',this)"><i class="fa-solid fa-gear"></i><span>Config</span></a>
+  </nav>
+</aside>
+
+<!-- ── Main ── -->
+<main>
+
+  <!-- DASHBOARD -->
+  <section id="page-dashboard">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-robot"></i></div>
+        <div class="stat-info"><div class="val" id="stat-online">0</div><div class="lbl">Bots Online</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-key"></i></div>
+        <div class="stat-info"><div class="val" id="stat-keys">0</div><div class="lbl">Keys Geradas</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-ban"></i></div>
+        <div class="stat-info"><div class="val" id="stat-revoked">0</div><div class="lbl">Keys Revogadas</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-gamepad"></i></div>
+        <div class="stat-info"><div class="val" id="stat-salas">—</div><div class="lbl">Salas Disponíveis</div></div>
+      </div>
+    </div>
+    <div class="generator">
+      <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerador de Acesso</div>
+      <div class="gen-row">
+        <div class="input-wrap" style="flex:1;min-width:160px">
+          <i class="fa-solid fa-user"></i>
+          <input id="user-input" type="text" placeholder="Nome do usuário" autocomplete="off"
+            style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+        </div>
+        <div class="input-wrap" style="flex:1;min-width:160px">
+          <i class="fa-solid fa-lock"></i>
+          <input id="pass-input" type="text" placeholder="Senha do usuário" autocomplete="off"
+            style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+        </div>
+        <select id="plan-select">
+          <option value="Semanal">📅 Semanal</option>
+          <option value="Mensal">📆 Mensal</option>
+          <option value="Permanente">♾️ Permanente</option>
+        </select>
+        <div class="input-wrap" style="width:130px">
+          <i class="fa-solid fa-gamepad"></i>
+          <input id="salas-input" type="number" min="1" placeholder="Qtd salas" autocomplete="off"
+            style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+        </div>
+        <button class="btn btn-blue" onclick="generateKey()"><i class="fa-solid fa-floppy-disk"></i> Salvar Usuário</button>
+      </div>
+      <div class="gen-row" style="margin-top:12px">
+        <span style="font-size:.82rem;color:var(--muted)"><i class="fa-solid fa-key" style="color:var(--blue)"></i> Key gerada automaticamente: <span id="preview-key" style="font-family:monospace;color:var(--text)">—</span></span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="section-title" style="margin:0"><i class="fa-solid fa-table-list"></i> Keys Ativas</div>
+      </div>
+      <table>
+        <thead><tr><th>Usuário</th><th>Senha</th><th>Key</th><th>Plano</th><th>Salas</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody id="keys-tbody">
+          <tr id="empty-row"><td colspan="7"><div class="empty"><i class="fa-solid fa-key"></i>Nenhuma key gerada ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- KEYS -->
+  <section id="page-keys" style="display:none">
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="section-title" style="margin:0"><i class="fa-solid fa-key"></i> Todas as Keys</div>
+      </div>
+      <table>
+        <thead><tr><th>Usuário</th><th>Key</th><th>Plano</th><th>Status</th><th>Criado em</th></tr></thead>
+        <tbody id="keys-all-tbody">
+          <tr><td colspan="5"><div class="empty"><i class="fa-solid fa-key"></i>Nenhuma key registrada.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- USUÁRIOS -->
+  <section id="page-usuarios" style="display:none">
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="section-title" style="margin:0"><i class="fa-solid fa-users"></i> Usuários Registrados</div>
+      </div>
+      <table>
+        <thead><tr><th>Usuário</th><th>Keys Ativas</th><th>Plano</th><th>Status</th></tr></thead>
+        <tbody id="users-tbody">
+          <tr><td colspan="4"><div class="empty"><i class="fa-solid fa-users"></i>Nenhum usuário registrado.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- API -->
+  <section id="page-api" style="display:none">
+    <div class="generator">
+      <div class="section-title"><i class="fa-solid fa-plug"></i> SalasFF API</div>
+      <div class="gen-row" style="margin-bottom:16px">
+        <button class="btn btn-blue" onclick="loadModos()"><i class="fa-solid fa-rotate"></i> Atualizar Modos</button>
+        <span style="font-size:.82rem;color:var(--muted)">Saldo: <strong id="api-saldo" style="color:var(--green)">—</strong> salas</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Modo</th><th>Senha</th><th>Sala ID</th><th>Tipo</th></tr></thead>
+          <tbody id="modos-tbody">
+            <tr><td colspan="4"><div class="empty"><i class="fa-solid fa-gamepad"></i>Clique em Atualizar para carregar os modos.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section id="page-config" style="display:none">
+    <div class="generator">
+      <div class="section-title"><i class="fa-solid fa-gear"></i> Configurações do Painel</div>
+      <div style="display:flex;flex-direction:column;gap:18px;max-width:420px">
+        <div class="login-field">
+          <label>Usuário Admin</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-user"></i>
+            <input id="cfg-user" type="text" placeholder="Novo usuário admin"
+              style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+          </div>
+        </div>
+        <div class="login-field">
+          <label>Senha Admin</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input id="cfg-pass" type="password" placeholder="Nova senha admin"
+              style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+          </div>
+        </div>
+        <div class="login-field">
+          <label>Confirmar Senha</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input id="cfg-pass2" type="password" placeholder="Repita a nova senha"
+              style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+          </div>
+        </div>
+        <button class="btn btn-blue" style="width:fit-content" onclick="saveAdminCredentials()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar Credenciais
+        </button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Modal Adicionar Salas -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <h3><i class="fa-solid fa-circle-plus"></i> Adicionar Salas</h3>
+    <p style="font-size:.85rem;color:var(--muted)">Usuário: <strong id="modal-username" style="color:var(--text)"></strong></p>
+    <div class="login-field">
+      <label>Quantidade a adicionar</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-gamepad"></i>
+        <input id="modal-qtd" type="number" min="1" placeholder="Ex: 10"
+          style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px 0 38px;width:100%;outline:none;font-size:.9rem">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+      <button class="btn btn-green" onclick="confirmAddSalas()"><i class="fa-solid fa-circle-plus"></i> Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Renovar Key -->
+<div id="modal-renew-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9998">
+  <div class="modal-box">
+    <h3><i class="fa-solid fa-rotate" style="color:var(--blue)"></i> Renovar Key</h3>
+    <p style="font-size:.85rem;color:var(--muted)">Usuário: <strong id="renew-username" style="color:var(--text)"></strong></p>
+    <div class="login-field">
+      <label>Novo Plano</label>
+      <select id="renew-plan"
+        style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;height:42px;padding:0 14px;width:100%;outline:none;font-size:.9rem;cursor:pointer">
+        <option value="Semanal">📅 Semanal</option>
+        <option value="Mensal">📆 Mensal</option>
+        <option value="Permanente">♾️ Permanente</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="closeRenewModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+      <button class="btn btn-blue" onclick="confirmRenew()"><i class="fa-solid fa-rotate"></i> Renovar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-msg"></span></div>
+
+<script>
+  // ── Login ──
+  const CREDENTIALS = { user: 'Cloud', pass: 'Dev0' };
+
+  document.getElementById('login-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  function doLogin() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value;
+    const err = document.getElementById('login-error');
+
+    if (u === CREDENTIALS.user && p === CREDENTIALS.pass) {
+      const screen = document.getElementById('login-screen');
+      screen.style.transition = 'opacity .4s';
+      screen.style.opacity = '0';
+      setTimeout(() => screen.remove(), 400);
+    } else {
+      err.classList.add('show');
+      document.getElementById('login-pass').value = '';
+      document.getElementById('login-pass').focus();
+      setTimeout(() => err.classList.remove('show'), 3000);
+    }
+  }
+
+  function togglePass() {
+    const input = document.getElementById('login-pass');
+    const icon  = document.getElementById('eye-icon');
+    const show  = input.type === 'password';
+    input.type  = show ? 'text' : 'password';
+    icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  }
+
+  function saveAdminCredentials() {
+    const u  = document.getElementById('cfg-user').value.trim();
+    const p  = document.getElementById('cfg-pass').value;
+    const p2 = document.getElementById('cfg-pass2').value;
+
+    if (!u)       { showToast('Informe o novo usuário!', 'error'); return; }
+    if (!p)       { showToast('Informe a nova senha!', 'error'); return; }
+    if (p !== p2) { showToast('As senhas não coincidem!', 'error'); return; }
+
+    CREDENTIALS.user = u;
+    CREDENTIALS.pass = p;
+
+    document.getElementById('cfg-user').value  = '';
+    document.getElementById('cfg-pass').value  = '';
+    document.getElementById('cfg-pass2').value = '';
+    showToast(`Credenciais atualizadas! Usuário: ${u}`, 'success');
+  }
+
+  const API_KEY  = '266vq0badxid7jpcf96t';
+  const API_BASE = 'https://salasff.com';
+  const PROXY    = 'https://api.allorigins.win/raw?url=';
+
+  async function apiFetch(endpoint) {
+    const url = `${API_BASE}${endpoint}`;
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    return res.json();
+  }
+
+  async function loadSaldo() {
+    try {
+      const data = await apiFetch(`/modos?key=${API_KEY}`);
+      if (data.success) {
+        document.getElementById('stat-salas').textContent = data.salas.toLocaleString('pt-BR');
+        document.getElementById('api-saldo').textContent  = data.salas.toLocaleString('pt-BR');
+        return data;
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  async function loadModos() {
+    showToast('Carregando modos...', 'info');
+    const data = await loadSaldo();
+    const tbody = document.getElementById('modos-tbody');
+    if (!data) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="fa-solid fa-triangle-exclamation"></i>Erro ao carregar modos.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    const render = (modos, tipo, cor) => modos.forEach(m => {
+      tbody.innerHTML += `<tr>
+        <td>${m.nome}</td>
+        <td><span class="key-badge">${m.senha}</span></td>
+        <td><span class="key-badge" style="color:var(--muted);font-size:.75rem">${m.salaid}</span></td>
+        <td><span class="plan-badge" style="background:${cor}20;color:${cor}">${tipo}</span></td>
+      </tr>`;
+    });
+    if (data.modos?.length)        render(data.modos,        'Privado',  'var(--blue)');
+    if (data.modos_Publico?.length) render(data.modos_Publico,'Público',  'var(--green)');
+    showToast(`${(data.modos?.length||0)+(data.modos_Publico?.length||0)} modos carregados!`, 'success');
+  }
+
+  // Carrega saldo ao iniciar
+  document.addEventListener('DOMContentLoaded', () => { 
+    loadSaldo();
+    loadKeysFromStorage();
+    loadSavedKeys(); // Carrega keys salvas anteriormente
+  });
+
+  function loadSavedKeys() {
+    const saved = localStorage.getItem('cloudManagerKeys');
+    if (saved) {
+      try {
+        const keys = JSON.parse(saved);
+        console.log('=== CARREGANDO KEYS SALVAS ===');
+        console.log('Total de keys encontradas:', keys.length);
+        console.log('Dados:', keys);
+        
+        if (keys.length > 0) {
+          // Remove a linha vazia se existir
+          const emptyRow = document.getElementById('empty-row');
+          if (emptyRow) emptyRow.remove();
+          
+          // Renderiza cada key salva
+          keys.forEach(keyData => {
+            addKeyToTable(keyData);
+          });
+          
+          updateCounters();
+          console.log('Keys carregadas com sucesso!');
+        }
+      } catch(e) {
+        console.error('Erro ao carregar keys salvas:', e);
+      }
+    } else {
+      console.log('Nenhuma key salva encontrada');
+    }
+  }
+  
+  function addKeyToTable(keyData) {
+    const tbody = document.getElementById('keys-tbody');
+    const tr = document.createElement('tr');
+    
+    tr.dataset.key = keyData.key;
+    tr.dataset.user = keyData.user;
+    tr.dataset.pass = keyData.pass;
+    tr.dataset.plan = keyData.plan;
+    tr.dataset.salas = keyData.salas;
+    tr.dataset.createdAt = keyData.createdAt || Date.now();
+
+    const planClass = keyData.plan.toLowerCase();
+    const initials = keyData.user.slice(0, 2).toUpperCase();
+
+    tr.innerHTML = `
+      <td><div class="user-cell"><div class="avatar">${initials}</div><span>${keyData.user}</span></div></td>
+      <td><span class="key-badge">${keyData.pass}</span></td>
+      <td><span class="key-badge" style="color:var(--muted)">${keyData.key}</span></td>
+      <td><span class="plan-badge ${planClass}">${keyData.plan}</span></td>
+      <td><span class="key-badge" style="color:var(--green)">${keyData.salas}</span></td>
+      <td><span class="status-badge"><span class="dot"></span>Ativo</span></td>
+      <td>
+        <div class="actions">
+          <button class="btn-icon blue" title="Copiar" onclick="copyKey(this)"><i class="fa-solid fa-copy"></i></button>
+          <button class="btn-icon green" title="Adicionar Salas" onclick="openAddSalas(this)"><i class="fa-solid fa-circle-plus"></i></button>
+          <button class="btn-icon blue" title="Renovar" onclick="renewKey(this)"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn-icon red" title="Apagar" onclick="deleteKey(this)"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+    onlineCount++;
+    totalKeys++;
+  }
+
+  function loadKeysFromStorage() {
+    // Esta função agora é redundante, mas mantemos para compatibilidade
+    // A função loadSavedKeys() faz o trabalho principal
+    return;
+  }
+
+  function renderKeysToTable(keys) {
+    // Função antiga - agora usa addKeyToTable
+    const emptyRow = document.getElementById('empty-row');
+    if (emptyRow) emptyRow.remove();
+    
+    keys.forEach(keyData => {
+      addKeyToTable(keyData);
+    });
+
+    updateCounters();
+  }
+
+  // ── Navegação ──
+  const pages = ['dashboard','keys','usuarios','api','config'];
+
+  function navigate(page, link) {
+    pages.forEach(p => {
+      document.getElementById('page-' + p).style.display = p === page ? 'flex' : 'none';
+    });
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    if (page === 'keys')     syncKeysPage();
+    if (page === 'usuarios') syncUsersPage();
+    if (page === 'api')      loadModos();
+  }
+
+  function syncKeysPage() {
+    const rows = document.querySelectorAll('#keys-tbody tr[data-key]');
+    const tbody = document.getElementById('keys-all-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="fa-solid fa-key"></i>Nenhuma key registrada.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    const now = new Date().toLocaleString('pt-BR');
+    rows.forEach(r => {
+      const plan = r.dataset.plan;
+      tbody.innerHTML += `<tr>
+        <td><div class="user-cell"><div class="avatar">${r.dataset.user.slice(0,2).toUpperCase()}</div>${r.dataset.user}</div></td>
+        <td><span class="key-badge">${r.dataset.pass}</span></td>
+        <td><span class="key-badge" style="color:var(--muted)">${r.dataset.key}</span></td>
+        <td><span class="plan-badge ${plan.toLowerCase()}">${plan}</span></td>
+        <td><span class="status-badge"><span class="dot"></span>Ativo</span></td>
+        <td style="color:var(--muted);font-size:.82rem">${now}</td>
+      </tr>`;
+    });
+  }
+
+  function syncUsersPage() {
+    const rows = document.querySelectorAll('#keys-tbody tr[data-key]');
+    const tbody = document.getElementById('users-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="fa-solid fa-users"></i>Nenhum usuário registrado.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    rows.forEach(r => {
+      const plan = r.dataset.plan;
+      tbody.innerHTML += `<tr>
+        <td><div class="user-cell"><div class="avatar">${r.dataset.user.slice(0,2).toUpperCase()}</div>${r.dataset.user}</div></td>
+        <td>1</td>
+        <td><span class="plan-badge ${plan.toLowerCase()}">${plan}</span></td>
+        <td><span class="status-badge"><span class="dot"></span>Ativo</span></td>
+      </tr>`;
+    });
+  }
+
+  // ── Dashboard ──
+  let onlineCount  = 0;
+  let totalKeys    = 0;
+  let revokedCount = 0;
+
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function randKey(len = 8) {
+    return Array.from({ length: len }, () => chars[randInt(0, chars.length - 1)]).join('');
+  }
+
+  function updateCounters() {
+    document.getElementById('sidebar-count').textContent = onlineCount;
+    document.getElementById('stat-online').textContent   = onlineCount;
+    document.getElementById('stat-keys').textContent     = totalKeys;
+    document.getElementById('stat-revoked').textContent  = revokedCount;
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    const icon  = toast.querySelector('i');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.className = `show ${type}`;
+    icon.className = type === 'success' ? 'fa-solid fa-circle-check'
+                   : type === 'error'   ? 'fa-solid fa-circle-xmark'
+                   :                      'fa-solid fa-circle-info';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.className = '', 3000);
+  }
+
+  // Gera preview da key ao digitar
+  document.addEventListener('DOMContentLoaded', () => {
+    const inputs = ['user-input','pass-input'];
+    inputs.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', refreshPreview);
+    });
+  });
+
+  function refreshPreview() {
+    document.getElementById('preview-key').textContent = randKey();
+  }
+
+  function generateKey() {
+    const plan  = document.getElementById('plan-select').value;
+    const user  = document.getElementById('user-input').value.trim();
+    const pass  = document.getElementById('pass-input').value.trim();
+    const salas = parseInt(document.getElementById('salas-input').value) || 0;
+
+    if (!user)  { showToast('Informe o nome do usuário!', 'error'); return; }
+    if (!pass)  { showToast('Informe a senha do usuário!', 'error'); return; }
+    if (!salas) { showToast('Informe a quantidade de salas!', 'error'); return; }
+
+    const key = randKey();
+    const createdAt = Date.now();
+
+    const emptyRow = document.getElementById('empty-row');
+    if (emptyRow) emptyRow.remove();
+
+    const keyData = {
+      key: key,
+      user: user,
+      pass: pass,
+      plan: plan,
+      salas: salas,
+      createdAt: createdAt
+    };
+    
+    addKeyToTable(keyData);
+    updateCounters();
+    
+    // Salva no localStorage para o painel cliente validar
+    syncKeysToStorage();
+    
+    document.getElementById('user-input').value  = '';
+    document.getElementById('pass-input').value  = '';
+    document.getElementById('salas-input').value = '';
+    document.getElementById('preview-key').textContent = '—';
+    showToast(`Usuário ${user} salvo com sucesso!`, 'success');
+  }
+
+  let _modalRow = null;
+
+  function openAddSalas(btn) {
+    _modalRow = btn.closest('tr');
+    document.getElementById('modal-username').textContent = _modalRow.dataset.user;
+    document.getElementById('modal-qtd').value = '';
+    document.getElementById('modal-overlay').classList.add('show');
+    setTimeout(() => document.getElementById('modal-qtd').focus(), 100);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+    _modalRow = null;
+  }
+
+  function confirmAddSalas() {
+    const qtd = parseInt(document.getElementById('modal-qtd').value) || 0;
+    if (!qtd || qtd < 1) { showToast('Informe uma quantidade válida!', 'error'); return; }
+
+    const atual = parseInt(_modalRow.dataset.salas) || 0;
+    const novo  = atual + qtd;
+    _modalRow.dataset.salas = novo;
+    _modalRow.querySelector('td:nth-child(5) .key-badge').textContent = novo;
+
+    // Salva as alterações
+    syncKeysToStorage();
+
+    closeModal();
+    showToast(`+${qtd} salas adicionadas para ${_modalRow.dataset.user}!`, 'success');
+  }
+
+  // Fechar modal clicando fora
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  // Enter no input do modal
+  document.getElementById('modal-qtd').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmAddSalas();
+  });
+
+  function getRow(btn) {
+    return btn.closest('tr');
+  }
+
+  function copyKey(btn) {
+    const tr   = getRow(btn);
+    const text = `Usuário: ${tr.dataset.user} | Senha: ${tr.dataset.pass} | Key: ${tr.dataset.key}`;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copiado para a área de transferência!', 'info');
+    });
+  }
+
+  function renewKey(btn) {
+    _renewRow = btn.closest('tr');
+    document.getElementById('renew-username').textContent = _renewRow.dataset.user;
+    document.getElementById('renew-plan').value = _renewRow.dataset.plan;
+    document.getElementById('modal-renew-overlay').style.display = 'flex';
+  }
+
+  function closeRenewModal() {
+    document.getElementById('modal-renew-overlay').style.display = 'none';
+    _renewRow = null;
+  }
+
+  function confirmRenew() {
+    const plan      = document.getElementById('renew-plan').value;
+    const planClass = plan.toLowerCase();
+    _renewRow.dataset.plan = plan;
+    _renewRow.querySelector('td:nth-child(4) .plan-badge').className = `plan-badge ${planClass}`;
+    _renewRow.querySelector('td:nth-child(4) .plan-badge').textContent = plan;
+    
+    // Salva as alterações
+    syncKeysToStorage();
+    
+    closeRenewModal();
+    showToast(`Plano de ${_renewRow.dataset.user} renovado para ${plan}!`, 'success');
+  }
+
+  document.getElementById('modal-renew-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-renew-overlay')) closeRenewModal();
+  });
+
+  let _renewRow = null;
+
+  function deleteKey(btn) {
+    const tr = getRow(btn);
+    if (!confirm(`Apagar a key de ${tr.dataset.user}?`)) return;
+    tr.remove();
+    onlineCount  = Math.max(0, onlineCount - 1);
+    revokedCount++;
+    updateCounters();
+    syncKeysToStorage();
+    showToast(`Key de ${tr.dataset.user} removida.`, 'error');
+
+    if (!document.querySelector('#keys-tbody tr')) {
+      const tbody = document.getElementById('keys-tbody');
+      tbody.innerHTML = '<tr id="empty-row"><td colspan="7"><div class="empty"><i class="fa-solid fa-key"></i>Nenhuma key gerada ainda.</div></td></tr>';
+    }
+  }
+
+  function syncKeysToStorage() {
+    const rows = document.querySelectorAll('#keys-tbody tr[data-key]');
+    const keys = [];
+    rows.forEach(r => {
+      keys.push({
+        user: r.dataset.user,
+        key: r.dataset.key,
+        pass: r.dataset.pass,
+        plan: r.dataset.plan,
+        salas: r.dataset.salas,
+        createdAt: r.dataset.createdAt || Date.now()
+      });
+    });
+    console.log('=== SALVANDO KEYS NO LOCALSTORAGE ===');
+    console.log('Total de keys:', keys.length);
+    console.log('Dados:', keys);
+    
+    // Salva em múltiplos locais para compatibilidade com mobile
+    localStorage.setItem('cloudManagerKeys', JSON.stringify(keys));
+    sessionStorage.setItem('cloudManagerKeys', JSON.stringify(keys));
+    
+    // Tenta salvar com chaves alternativas
+    try {
+      localStorage.setItem('cloudManagerUsers', JSON.stringify(keys));
+      localStorage.setItem('users', JSON.stringify(keys));
+    } catch(e) {
+      console.log('Erro ao salvar chaves alternativas:', e);
+    }
+    
+    console.log('Salvo com sucesso em localStorage e sessionStorage!');
+    
+    // Salvar no servidor
+    fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users: keys, rooms: [] })
+    })
+    .then(() => console.log('Sincronizado com servidor!'))
+    .catch(e => console.log('Servidor não disponível, usando apenas localStorage'));
+  }
+</script>
+</body>
+</html>

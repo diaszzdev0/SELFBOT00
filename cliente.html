@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud SelfBot</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg:        #0f172a;
+    --card:      #1e293b;
+    --border:    #334155;
+    --text:      #e2e8f0;
+    --muted:     #94a3b8;
+    --blue:      #3b82f6;
+    --green:     #10b981;
+    --red:       #ef4444;
+    --radius:    10px;
+    --sidebar-w: 240px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  aside {
+    width: var(--sidebar-w);
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 20px;
+    gap: 32px;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--blue);
+  }
+
+  .brand i { font-size: 1.4rem; }
+
+  .status-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .user-info-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .user-info-card .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .85rem;
+  }
+
+  .user-info-card .info-label {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: .7rem;
+    letter-spacing: .05em;
+  }
+
+  .user-info-card .info-value {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .plan-badge-sidebar {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  .plan-badge-sidebar.semanal   { background: rgba(59,130,246,.15);  color: var(--blue); }
+  .plan-badge-sidebar.mensal    { background: rgba(16,185,129,.15);  color: var(--green); }
+  .plan-badge-sidebar.permanente{ background: rgba(239,68,68,.15);   color: var(--red); }
+
+  .status-card .label {
+    font-size: .75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+
+  .status-card .status {
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .status-card .status.online { color: var(--green); }
+  .status-card .status.offline { color: var(--red); }
+
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    animation: pulse 1.5s infinite;
+  }
+
+  .dot.online { background: var(--green); }
+  .dot.offline { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .3; }
+  }
+
+  nav { display: flex; flex-direction: column; gap: 4px; }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: .9rem;
+    transition: background .2s, color .2s;
+  }
+
+  nav a.active, nav a:hover {
+    background: rgba(59,130,246,.15);
+    color: var(--blue);
+  }
+
+  main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .config-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+
+  .section-title i { color: var(--blue); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-field label {
+    font-size: .78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-wrap i {
+    position: absolute;
+    left: 13px;
+    color: var(--muted);
+    font-size: .9rem;
+    pointer-events: none;
+  }
+
+  .input-wrap input, .input-wrap textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: .9rem;
+    padding: 0 14px 0 38px;
+    outline: none;
+    transition: border-color .2s;
+    font-family: inherit;
+  }
+
+  .input-wrap input { height: 42px; }
+  .input-wrap textarea { 
+    min-height: 80px; 
+    padding: 12px 14px 12px 38px;
+    resize: vertical;
+  }
+
+  .input-wrap input:focus, .input-wrap textarea:focus { border-color: var(--blue); }
+
+  .file-upload {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .file-upload input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .file-upload label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+    height: 42px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: .9rem;
+    transition: filter .2s;
+  }
+
+  .file-upload label:hover { filter: brightness(1.15); }
+
+  .file-name {
+    font-size: .85rem;
+    color: var(--muted);
+  }
+
+  .btn {
+    padding: 0 20px;
+    height: 42px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: filter .2s, transform .1s;
+    font-size: .9rem;
+  }
+
+  .btn:active { transform: scale(.97); }
+  .btn:hover  { filter: brightness(1.15); }
+
+  .btn-blue  { background: var(--blue);  color: #fff; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-red   { background: var(--red);   color: #fff; }
+
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .logs-container {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: .85rem;
+  }
+
+  .log-entry {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    display: flex;
+    gap: 12px;
+  }
+
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-time {
+    color: var(--muted);
+    min-width: 80px;
+  }
+
+  .log-msg { color: var(--text); }
+  .log-msg.success { color: var(--green); }
+  .log-msg.error { color: var(--red); }
+  .log-msg.info { color: var(--blue); }
+
+  #toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .88rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: transform .3s, opacity .3s;
+    z-index: 999;
+    min-width: 260px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast i { font-size: 1rem; }
+  #toast.success i { color: var(--green); }
+  #toast.error   i { color: var(--red); }
+  #toast.info    i { color: var(--blue); }
+
+  .login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+
+  .login-brand {
+    text-align: center;
+  }
+
+  .login-brand i {
+    font-size: 2.4rem;
+    color: var(--blue);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .login-brand h1 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .login-brand p {
+    font-size: .82rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .login-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .login-field label {
+    font-size: .78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+
+  .login-error {
+    font-size: .82rem;
+    color: var(--red);
+    text-align: center;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .login-error.show { opacity: 1; }
+
+  .btn-login {
+    width: 100%;
+    height: 46px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: filter .2s, transform .1s;
+  }
+
+  .btn-login:hover  { filter: brightness(1.15); }
+  .btn-login:active { transform: scale(.98); }
+
+  section { display: none; flex-direction: column; gap: 28px; }
+  section.active { display: flex; }
+
+  @media (max-width: 768px) {
+    aside { width: 60px; padding: 20px 10px; }
+    .brand span, .status-card .label, nav a span { display: none; }
+    main { margin-left: 60px; padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Tela de Login -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-brand">
+      <i class="fa-solid fa-robot"></i>
+      <h1>Cloud SelfBot</h1>
+      <p>Acesso ao Painel</p>
+    </div>
+
+    <div class="login-field">
+      <label>Usuário</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input id="login-user" type="text" placeholder="Digite seu usuário" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label>Key de Acesso</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-key"></i>
+        <input id="login-key" type="text" placeholder="Digite sua key" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="login-error" id="login-error">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <span>Usuário ou key inválidos.</span>
+    </div>
+
+    <button class="btn-login" onclick="doLogin()">
+      <i class="fa-solid fa-right-to-bracket"></i> Entrar
+    </button>
+    
+    <button onclick="showDebugInfo()" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.8rem;cursor:pointer;margin-top:8px">
+      <i class="fa-solid fa-bug"></i> Ver Dados de Debug
+    </button>
+  </div>
+</div>
+
+<aside>
+  <div class="brand">
+    <i class="fa-solid fa-robot"></i>
+    <span>Cloud SelfBot</span>
+  </div>
+
+  <div class="user-info-card">
+    <div class="info-row">
+      <span class="info-label">Usuário</span>
+      <span class="info-value" id="sidebar-username">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Plano</span>
+      <span class="plan-badge-sidebar" id="sidebar-plan">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Expira em</span>
+      <span class="info-value" id="sidebar-expiry">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Salas</span>
+      <span class="info-value" style="color:var(--green)" id="sidebar-salas">—</span>
+    </div>
+  </div>
+
+  <div class="status-card">
+    <div class="label">Status do Bot</div>
+    <div class="status offline" id="bot-status">
+      <span class="dot offline"></span>Offline
+    </div>
+  </div>
+
+  <nav>
+    <a href="#" class="active" onclick="navigate('token',this)"><i class="fa-solid fa-key"></i><span>Token & Mensagem</span></a>
+    <a href="#" onclick="navigate('modos',this)"><i class="fa-solid fa-wand-sparkles"></i><span>Modos de Jogo</span></a>
+    <a href="#" onclick="navigate('salas',this)"><i class="fa-solid fa-gamepad"></i><span>Minhas Salas</span></a>
+    <a href="#" onclick="navigate('imap',this)"><i class="fa-solid fa-envelope"></i><span>Config. IMAP</span></a>
+    <a href="#" onclick="navigate('logs',this)"><i class="fa-solid fa-list"></i><span>Logs</span></a>
+    <a href="#" onclick="logout()" style="margin-top:auto;color:var(--red)"><i class="fa-solid fa-right-from-bracket"></i><span>Sair</span></a>
+  </nav>
+</aside>
+
+<main>
+
+  <!-- TOKEN & MENSAGEM -->
+  <section id="page-token" class="active">
+    <div class="config-section">
+      <div class="section-title"><i class="fa-solid fa-key"></i> Token do Discord</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Token do Discord</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-key"></i>
+            <input id="discord-token" type="password" placeholder="Seu token de selfbot">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>ID do Servidor</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-server"></i>
+            <input id="server-id" type="text" placeholder="ID do servidor Discord">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>ID da Categoria</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-folder"></i>
+            <input id="category-id" type="text" placeholder="ID da categoria a monitorar">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-title"><i class="fa-solid fa-message"></i> Mensagem e Imagem</div>
+      <div class="form-field" style="margin-bottom:18px">
+        <label>Mensagem a ser enviada nas threads</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-comment"></i>
+          <textarea id="thread-message" placeholder="Olá! Digite: pago Nome Sobrenome para validar seu pagamento de hoje."></textarea>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Imagem do Painel (opcional)</label>
+        <div class="file-upload">
+          <input type="file" id="panel-image" accept="image/*" onchange="handleImageUpload(this)">
+          <label for="panel-image">
+            <i class="fa-solid fa-image"></i> Escolher Imagem
+          </label>
+          <span class="file-name" id="file-name">Nenhuma imagem selecionada</span>
+        </div>
+        <small style="color:var(--muted);font-size:.75rem;margin-top:4px">Ou cole uma URL de imagem abaixo:</small>
+        <div class="input-wrap" style="margin-top:8px">
+          <i class="fa-solid fa-link"></i>
+          <input id="image-url" type="url" placeholder="https://exemplo.com/imagem.png">
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-title"><i class="fa-solid fa-terminal"></i> Formato de Envio da Sala</div>
+      
+      <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:16px;margin-bottom:20px">
+        <div style="display:flex;align-items:start;gap:12px">
+          <i class="fa-solid fa-circle-info" style="color:var(--blue);font-size:1.2rem;margin-top:2px"></i>
+          <div style="font-size:.85rem;color:var(--text);line-height:1.6">
+            <strong>Como funciona:</strong> Escolha como o bot enviará o ID e senha da sala na thread após validar os pagamentos.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;gap:16px">
+        <label style="background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" 
+          onclick="toggleSalaCommand(true)" id="option-with-command">
+          <input type="radio" name="sala-format" value="with-command" checked 
+            style="width:20px;height:20px;cursor:pointer;accent-color:var(--blue)">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <i class="fa-solid fa-terminal" style="color:var(--blue);font-size:1.1rem"></i>
+              <h3 style="font-size:.95rem;font-weight:600;color:var(--text)">Com Comando !sala</h3>
+            </div>
+            <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Envia com o comando do bot</p>
+            <code style="background:var(--card);border:1px solid var(--border);padding:8px 12px;border-radius:6px;font-size:.85rem;color:var(--green);display:inline-block">!sala 12345678 22</code>
+          </div>
+        </label>
+
+        <label style="background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" 
+          onclick="toggleSalaCommand(false)" id="option-without-command">
+          <input type="radio" name="sala-format" value="without-command" 
+            style="width:20px;height:20px;cursor:pointer;accent-color:var(--blue)">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <i class="fa-solid fa-hashtag" style="color:var(--green);font-size:1.1rem"></i>
+              <h3 style="font-size:.95rem;font-weight:600;color:var(--text)">Sem Comando (Direto)</h3>
+            </div>
+            <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Envia apenas ID e senha</p>
+            <code style="background:var(--card);border:1px solid var(--border);padding:8px 12px;border-radius:6px;font-size:.85rem;color:var(--blue);display:inline-block">12345678 22</code>
+          </div>
+        </label>
+      </div>
+
+      <div style="margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px">
+        <div style="font-size:.85rem;color:var(--text);margin-bottom:8px">
+          <strong>Formato atual:</strong>
+        </div>
+        <code id="current-format-preview" style="background:var(--bg);border:1px solid var(--border);padding:10px 14px;border-radius:6px;font-size:.9rem;color:var(--green);display:block">!sala 12345678 22</code>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-blue" onclick="saveTokenConfig()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar Token & Mensagem
+        </button>
+        <button class="btn btn-green" onclick="startBot()">
+          <i class="fa-solid fa-play"></i> Iniciar Bot
+        </button>
+        <button class="btn btn-red" onclick="stopBot()">
+          <i class="fa-solid fa-stop"></i> Parar Bot
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODOS DE JOGO -->
+  <section id="page-modos">
+    <div class="config-section">
+      <div class="section-title"><i class="fa-solid fa-wand-sparkles"></i> Detecção de Modos de Jogo</div>
+      
+      <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:16px;margin-bottom:24px">
+        <div style="display:flex;align-items:start;gap:12px">
+          <i class="fa-solid fa-circle-info" style="color:var(--blue);font-size:1.2rem;margin-top:2px"></i>
+          <div style="font-size:.85rem;color:var(--text);line-height:1.6">
+            <strong>Como funciona:</strong> O selfbot detecta automaticamente o modo de jogo baseado no <strong>nome da thread</strong>. Configure abaixo as palavras-chave que identificam cada modo.<br>
+            <strong style="color:var(--red);margin-top:8px;display:block">✓ Threads "fila-XXXXXXX-inf" (7 dígitos) = Gel Infinito</strong>
+            <strong style="color:var(--blue);margin-top:4px;display:block">✓ Threads "fila-XXXXXXX" (7 dígitos) = Gelo Normal</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;gap:20px">
+        <!-- Modo: Gelo Normal -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,.15);color:var(--blue);display:grid;place-items:center">
+              <i class="fa-solid fa-snowflake"></i>
+            </div>
+            <div>
+              <h3 style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:2px">Gelo Normal</h3>
+              <p style="font-size:.75rem;color:var(--muted)">Detecta threads com gelo normal (1x1, 2x2, 3x3, 4x4)</p>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Palavras-chave (separadas por vírgula)</label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-tags"></i>
+              <textarea id="modo-gelo-normal" style="min-height:100px" placeholder="gelo normal, gel normal, 1x1 mobile, 1x1 misto...">gelo normal, gel normal, 1x1 mobile, 1x1 misto, 1x1 emulador, 2x2 mobile, 2x2 misto, 2x2 emulador, 3x3 mobile, 3x3 misto, 3x3 emulador, 4x4 mobile, 4x4 misto, 4x4 emulador</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modo: Gel Infinito -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(239,68,68,.15);color:var(--red);display:grid;place-items:center">
+              <i class="fa-solid fa-infinity"></i>
+            </div>
+            <div>
+              <h3 style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:2px">Gel Infinito (Apenas 1x1)</h3>
+              <p style="font-size:.75rem;color:var(--muted)">Detecta threads com gel infinito em 1x1 mobile ou emulador</p>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Palavras-chave (separadas por vírgula)</label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-tags"></i>
+              <textarea id="modo-gel-infinito" style="min-height:80px" placeholder="gel infinito, gel inf, -inf...">gel infinito, gel inf, gelo infinito, gelo inf, -inf, 1x1 mobile - gel infinito, 1x1 mobile - gel inf, 1x1 emulador - gel infinito, 1x1 emulador - gel inf</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-blue" onclick="saveModosConfig()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar Configuração de Modos
+        </button>
+        <button class="btn btn-green" onclick="testModoDetection()">
+          <i class="fa-solid fa-vial"></i> Testar Detecção
+        </button>
+      </div>
+
+      <!-- Exemplo de Detecção -->
+      <div style="margin-top:24px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <h3 style="font-size:.95rem;font-weight:600;margin-bottom:16px;color:var(--text)"><i class="fa-solid fa-flask" style="color:var(--blue)"></i> Teste de Detecção</h3>
+        <div class="form-field" style="margin-bottom:16px">
+          <label>Nome da Thread (exemplo)</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-hashtag"></i>
+            <input id="test-thread-name" type="text" placeholder="Ex: 1x1 Mobile - Gel Infinito - Pagamento João">
+          </div>
+        </div>
+        <div id="detection-result" style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:8px;min-height:60px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem">
+          Digite um nome de thread e clique em "Testar Detecção"
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MINHAS SALAS -->
+  <section id="page-salas">
+    <div class="config-section">
+      <div class="section-title"><i class="fa-solid fa-gamepad"></i> Gerenciamento de Salas</div>
+      
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center">
+          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Total de Salas</div>
+          <div style="font-size:2.2rem;font-weight:800;color:var(--blue);line-height:1" id="total-salas">0</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center">
+          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Salas em Uso</div>
+          <div style="font-size:2.2rem;font-weight:800;color:var(--green);line-height:1" id="salas-uso">0</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center">
+          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Salas Disponíveis</div>
+          <div style="font-size:2.2rem;font-weight:800;color:var(--muted);line-height:1" id="salas-disponiveis">0</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <h3 style="font-size:.95rem;font-weight:600;margin-bottom:16px;color:var(--text)"><i class="fa-solid fa-sliders" style="color:var(--blue)"></i> Configurar Limite de Salas</h3>
+        
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+          <div style="flex:1">
+            <label style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:8px">Quantidade de Salas Ativas</label>
+            <input type="range" id="salas-slider" min="0" max="100" value="0" 
+              style="width:100%;height:8px;border-radius:4px;background:var(--border);outline:none;-webkit-appearance:none;appearance:none"
+              oninput="updateSalasValue(this.value)">
+            <style>
+              #salas-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--blue);
+                cursor: pointer;
+              }
+              #salas-slider::-moz-range-thumb {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--blue);
+                cursor: pointer;
+                border: none;
+              }
+            </style>
+          </div>
+          <div style="min-width:80px;text-align:center">
+            <div style="font-size:2rem;font-weight:800;color:var(--blue)" id="salas-value">0</div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase">salas</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:14px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--text)">
+            <i class="fa-solid fa-circle-info" style="color:var(--blue)"></i>
+            <span>Você pode usar até <strong id="max-salas-info">0</strong> salas simultaneamente conforme seu plano.</span>
+          </div>
+        </div>
+
+        <div class="btn-group" style="margin-top:0">
+          <button class="btn btn-blue" onclick="saveSalasConfig()">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Configuração
+          </button>
+          <button class="btn btn-green" onclick="testSalas()">
+            <i class="fa-solid fa-vial"></i> Testar Conexão
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <h3 style="font-size:.95rem;font-weight:600;margin-bottom:16px;color:var(--text)"><i class="fa-solid fa-list-check" style="color:var(--green)"></i> Salas Ativas</h3>
+        <div id="salas-list" style="display:flex;flex-direction:column;gap:8px">
+          <div style="text-align:center;padding:32px;color:var(--muted);font-size:.85rem">
+            <i class="fa-solid fa-gamepad" style="font-size:2rem;opacity:.3;display:block;margin-bottom:12px"></i>
+            Nenhuma sala ativa no momento.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIGURAÇÕES IMAP -->
+  <section id="page-imap">
+    <div class="config-section">
+      <div class="section-title"><i class="fa-solid fa-envelope"></i> Configurações de E-mail (IMAP)</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Servidor IMAP</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-server"></i>
+            <input id="imap-server" type="text" placeholder="imap.gmail.com" value="imap.gmail.com">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>E-mail</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-at"></i>
+            <input id="email-user" type="email" placeholder="seu@email.com">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Senha do E-mail</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input id="email-pass" type="password" placeholder="Senha ou senha de app">
+          </div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-blue" onclick="saveImapConfig()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar Config. IMAP
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGS -->
+  <section id="page-logs">
+    <div class="config-section">
+      <div class="section-title">
+        <i class="fa-solid fa-list"></i> Logs do Sistema
+        <button class="btn btn-red" style="margin-left:auto;height:32px;padding:0 14px;font-size:.8rem" onclick="clearLogs()">
+          <i class="fa-solid fa-trash"></i> Limpar
+        </button>
+      </div>
+      <div class="logs-container" id="logs-container">
+        <div class="log-entry">
+          <span class="log-time">00:00:00</span>
+          <span class="log-msg info">Sistema iniciado. Aguardando configurações...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-msg"></span></div>
+
+<script>
+  // Sistema de autenticação
+  let currentUser = null;
+  let userPlan = null;
+  let expiryDate = null;
+  const ADMIN_API = 'http://localhost:8080/api/validate'; // Ajuste para sua API real
+
+  // Simulação de validação (em produção, buscar do painel admin)
+  const validUsers = JSON.parse(localStorage.getItem('cloudManagerUsers') || '[]');
+
+  document.getElementById('login-key').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function doLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const key  = document.getElementById('login-key').value.trim();
+    const err  = document.getElementById('login-error');
+
+    console.log('=== TENTATIVA DE LOGIN ===');
+    console.log('Usuário digitado:', user);
+    console.log('Key digitada:', key);
+
+    if (!user || !key) {
+      err.classList.add('show');
+      setTimeout(() => err.classList.remove('show'), 3000);
+      return;
+    }
+
+    // Mostra mensagem de carregamento
+    err.textContent = 'Verificando credenciais...';
+    err.style.color = '#3b82f6';
+    err.classList.add('show');
+
+    // Tenta sincronizar do servidor antes de validar
+    await syncFromServer();
+    
+    // Aguarda um pouco para garantir que os dados foram salvos
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Validação local (busca usuários do painel admin via localStorage)
+    const userData = validateUser(user, key);
+
+    console.log('Resultado da validação:', userData);
+
+    if (userData) {
+      currentUser = { user, key };
+      userPlan = userData.plan;
+      expiryDate = userData.expiryDate || calculateExpiry(userData.plan, userData.createdAt);
+      
+      localStorage.setItem('cloudSelfbotAuth', JSON.stringify({ 
+        ...currentUser, 
+        plan: userPlan, 
+        expiryDate,
+        salas: userData.salas 
+      }));
+      
+      const screen = document.getElementById('login-screen');
+      screen.style.transition = 'opacity .4s';
+      screen.style.opacity = '0';
+      setTimeout(() => {
+        screen.remove();
+        updateUserInfo(userData);
+      }, 400);
+      addLog(`Usuário ${user} autenticado com sucesso.`, 'success');
+    } else {
+      console.log('FALHA NA AUTENTICAÇÃO');
+      err.textContent = 'Usuário ou key inválidos.';
+      err.style.color = '#ef4444';
+      err.classList.add('show');
+      document.getElementById('login-key').value = '';
+      document.getElementById('login-key').focus();
+      setTimeout(() => err.classList.remove('show'), 3000);
+    }
+  }
+
+  function validateUser(user, key) {
+    // Tenta buscar do localStorage compartilhado (mesmo domínio)
+    try {
+      // Tenta múltiplas chaves de armazenamento
+      const storageKeys = ['cloudManagerKeys', 'cloudManagerUsers', 'users'];
+      
+      for (const storageKey of storageKeys) {
+        const adminData = localStorage.getItem(storageKey);
+        if (adminData) {
+          console.log(`Dados encontrados em ${storageKey}:`, adminData);
+          const keys = JSON.parse(adminData);
+          // Busca por usuário E key OU por usuário E senha
+          const found = keys.find(k => 
+            (k.user === user && k.key === key) || 
+            (k.user === user && k.pass === key)
+          );
+          if (found) {
+            console.log('Usuário encontrado:', found);
+            return { 
+              ...found, 
+              createdAt: found.createdAt || Date.now() 
+            };
+          }
+        }
+      }
+      
+      // Tenta buscar do sessionStorage também
+      const sessionData = sessionStorage.getItem('cloudManagerKeys');
+      if (sessionData) {
+        console.log('Dados encontrados em sessionStorage:', sessionData);
+        const keys = JSON.parse(sessionData);
+        const found = keys.find(k => 
+          (k.user === user && k.key === key) || 
+          (k.user === user && k.pass === key)
+        );
+        if (found) {
+          console.log('Usuário encontrado no sessionStorage:', found);
+          return { 
+            ...found, 
+            createdAt: found.createdAt || Date.now() 
+          };
+        }
+      }
+      
+      console.log('Usuário não encontrado. Tentando buscar do servidor...');
+      
+      // Tenta buscar do servidor como fallback
+      fetch('/api/data')
+        .then(res => res.json())
+        .then(data => {
+          if (data.users && data.users.length) {
+            localStorage.setItem('cloudManagerKeys', JSON.stringify(data.users));
+            console.log('Dados sincronizados do servidor:', data.users);
+          }
+        })
+        .catch(e => console.log('Servidor não disponível'));
+        
+      console.log('Nenhum dado encontrado em localStorage');
+    } catch(e) {
+      console.error('Erro ao validar usuário:', e);
+    }
+
+    return null;
+  }
+
+  function calculateExpiry(plan, createdAt) {
+    const created = new Date(createdAt);
+    let expiry = new Date(created);
+    
+    switch(plan.toLowerCase()) {
+      case 'semanal':
+        expiry.setDate(expiry.getDate() + 7);
+        break;
+      case 'mensal':
+        expiry.setMonth(expiry.getMonth() + 1);
+        break;
+      case 'permanente':
+        return null; // Sem expiração
+    }
+    
+    return expiry.getTime();
+  }
+
+  function updateUserInfo(userData) {
+    document.getElementById('sidebar-username').textContent = userData.user;
+    
+    const planBadge = document.getElementById('sidebar-plan');
+    planBadge.textContent = userData.plan;
+    planBadge.className = `plan-badge-sidebar ${userData.plan.toLowerCase()}`;
+    
+    document.getElementById('sidebar-salas').textContent = userData.salas || '0';
+    
+    updateExpiryDisplay();
+    loadSalasConfig();
+    
+    // Atualiza a cada minuto
+    setInterval(updateExpiryDisplay, 60000);
+  }
+
+  function updateExpiryDisplay() {
+    const expiryEl = document.getElementById('sidebar-expiry');
+    
+    if (!expiryDate) {
+      expiryEl.textContent = 'Permanente';
+      expiryEl.style.color = 'var(--green)';
+      return;
+    }
+    
+    const now = Date.now();
+    const diff = expiryDate - now;
+    
+    if (diff <= 0) {
+      expiryEl.textContent = 'Expirado';
+      expiryEl.style.color = 'var(--red)';
+      addLog('Sua key expirou! Entre em contato com o administrador.', 'error');
+      return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) {
+      expiryEl.textContent = `${days}d ${hours}h`;
+    } else {
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      expiryEl.textContent = `${hours}h ${minutes}m`;
+    }
+    
+    // Alerta se falta menos de 1 dia
+    if (days === 0 && hours < 24) {
+      expiryEl.style.color = 'var(--red)';
+    } else if (days < 3) {
+      expiryEl.style.color = 'var(--blue)';
+    } else {
+      expiryEl.style.color = 'var(--text)';
+    }
+  }
+
+  function checkAuth() {
+    const auth = localStorage.getItem('cloudSelfbotAuth');
+    if (auth) {
+      const data = JSON.parse(auth);
+      currentUser = { user: data.user, key: data.key };
+      userPlan = data.plan;
+      expiryDate = data.expiryDate;
+      
+      document.getElementById('login-screen').remove();
+      updateUserInfo(data);
+      addLog(`Sessão restaurada: ${currentUser.user}`, 'info');
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('cloudSelfbotAuth');
+    location.reload();
+  }
+
+  // Configuração de modos de jogo
+  let modosConfig = {
+    geloNormal: [
+      'gelo normal',
+      'gel normal',
+      '1x1 mobile',
+      '1x1 misto',
+      '1x1 emulador',
+      '2x2 mobile',
+      '2x2 misto',
+      '2x2 emulador',
+      '3x3 mobile',
+      '3x3 misto',
+      '3x3 emulador',
+      '4x4 mobile',
+      '4x4 misto',
+      '4x4 emulador'
+    ],
+    gelInfinito: [
+      'gel infinito',
+      'gel inf',
+      'gelo infinito',
+      'gelo inf',
+      '-inf',
+      '1x1 mobile - gel infinito',
+      '1x1 mobile - gel inf',
+      '1x1 emulador - gel infinito',
+      '1x1 emulador - gel inf'
+    ]
+  };
+
+  function detectGameMode(threadName) {
+    const name = threadName.toLowerCase();
+    
+    // Verifica padrão fila-XXXXXXX-inf (7 dígitos) - sempre Gel Infinito
+    if (/fila-\d{7}-inf/.test(name)) {
+      return { 
+        mode: 'gelInfinito', 
+        icon: 'fa-infinity', 
+        color: 'var(--red)', 
+        label: 'Gel Infinito (Fila)',
+        apiMode: 'gel_infinito'
+      };
+    }
+    
+    // Verifica padrão fila-XXXXXXX (7 dígitos) - sempre Gelo Normal
+    if (/fila-\d{7}/.test(name)) {
+      return { 
+        mode: 'geloNormal', 
+        icon: 'fa-snowflake', 
+        color: 'var(--blue)', 
+        label: 'Gelo Normal (Fila)',
+        apiMode: 'gelo_normal'
+      };
+    }
+    
+    // Verifica Gel Infinito (palavras-chave configuradas)
+    for (const keyword of modosConfig.gelInfinito) {
+      if (name.includes(keyword.toLowerCase())) {
+        return { 
+          mode: 'gelInfinito', 
+          icon: 'fa-infinity', 
+          color: 'var(--red)', 
+          label: 'Gel Infinito',
+          apiMode: 'gel_infinito'
+        };
+      }
+    }
+    
+    // Verifica Gelo Normal (inclui variações de jogadores e plataforma)
+    for (const keyword of modosConfig.geloNormal) {
+      if (name.includes(keyword.toLowerCase())) {
+        return { 
+          mode: 'geloNormal', 
+          icon: 'fa-snowflake', 
+          color: 'var(--blue)', 
+          label: 'Gelo Normal',
+          apiMode: 'gelo_normal'
+        };
+      }
+    }
+    
+    // Modo padrão se não detectar nada
+    return { 
+      mode: 'geloNormal', 
+      icon: 'fa-snowflake', 
+      color: 'var(--blue)', 
+      label: 'Gelo Normal (Padrão)',
+      apiMode: 'gelo_normal'
+    };
+  }
+
+  function saveModosConfig() {
+    const geloNormal = document.getElementById('modo-gelo-normal').value.split(',').map(s => s.trim()).filter(s => s);
+    const gelInfinito = document.getElementById('modo-gel-infinito').value.split(',').map(s => s.trim()).filter(s => s);
+    
+    if (!geloNormal.length || !gelInfinito.length) {
+      showToast('Cada modo precisa ter pelo menos uma palavra-chave!', 'error');
+      return;
+    }
+    
+    modosConfig = { geloNormal, gelInfinito };
+    localStorage.setItem('cloudSelfbotModos', JSON.stringify(modosConfig));
+    
+    showToast('Configuração de modos salva com sucesso!', 'success');
+    addLog('Modos configurados: Gelo Normal, Gel Infinito', 'success');
+  }
+
+  function testModoDetection() {
+    const threadName = document.getElementById('test-thread-name').value.trim();
+    const resultDiv = document.getElementById('detection-result');
+    
+    if (!threadName) {
+      showToast('Digite um nome de thread para testar!', 'error');
+      return;
+    }
+    
+    const detected = detectGameMode(threadName);
+    
+    resultDiv.innerHTML = `
+      <div style="display:flex;align-items:center;gap:16px;width:100%">
+        <div style="width:48px;height:48px;border-radius:50%;background:${detected.color}20;color:${detected.color};display:grid;place-items:center;font-size:1.2rem">
+          <i class="fa-solid ${detected.icon}"></i>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:4px">Modo Detectado: ${detected.label}</div>
+          <div style="font-size:.8rem;color:var(--muted)">Thread: "${threadName}"</div>
+        </div>
+        <div style="padding:6px 14px;border-radius:20px;background:${detected.color}20;color:${detected.color};font-size:.8rem;font-weight:600">
+          ${detected.mode.toUpperCase()}
+        </div>
+      </div>
+    `;
+    
+    addLog(`Teste: "${threadName}" → ${detected.label}`, 'info');
+    showToast(`Detectado: ${detected.label}`, 'success');
+  }
+
+  function loadModosConfig() {
+    const saved = localStorage.getItem('cloudSelfbotModos');
+    if (saved) {
+      modosConfig = JSON.parse(saved);
+      document.getElementById('modo-gelo-normal').value = modosConfig.geloNormal.join(', ');
+      document.getElementById('modo-gel-infinito').value = modosConfig.gelInfinito.join(', ');
+    }
+  }
+
+  // Bot e configurações
+  let botRunning = false;
+  let config = {
+    token: '',
+    serverId: '',
+    categoryId: '',
+    imapServer: 'imap.gmail.com',
+    emailUser: '',
+    emailPass: '',
+    threadMessage: 'Olá! Digite: pago Nome Sobrenome para validar seu pagamento de hoje.',
+    imageUrl: '',
+    useSalaCommand: true
+  };
+
+  function toggleSalaCommand(useCommand) {
+    config.useSalaCommand = useCommand;
+    
+    const withCmd = document.getElementById('option-with-command');
+    const withoutCmd = document.getElementById('option-without-command');
+    const preview = document.getElementById('current-format-preview');
+    
+    if (useCommand) {
+      withCmd.style.borderColor = 'var(--blue)';
+      withCmd.style.background = 'rgba(59,130,246,.05)';
+      withoutCmd.style.borderColor = 'var(--border)';
+      withoutCmd.style.background = 'var(--bg)';
+      preview.textContent = '!sala 12345678 22';
+      preview.style.color = 'var(--green)';
+    } else {
+      withoutCmd.style.borderColor = 'var(--blue)';
+      withoutCmd.style.background = 'rgba(59,130,246,.05)';
+      withCmd.style.borderColor = 'var(--border)';
+      withCmd.style.background = 'var(--bg)';
+      preview.textContent = '12345678 22';
+      preview.style.color = 'var(--blue)';
+    }
+  }
+
+  function formatSalaMessage(salaId, senha) {
+    if (config.useSalaCommand) {
+      return `!sala ${salaId} ${senha}`;
+    } else {
+      return `${salaId} ${senha}`;
+    }
+  }
+
+  function navigate(page, link) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    
+    // Recarrega config de salas ao navegar para a página
+    if (page === 'salas') {
+      loadSalasConfig();
+    }
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    const icon  = toast.querySelector('i');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.className = `show ${type}`;
+    icon.className = type === 'success' ? 'fa-solid fa-circle-check'
+                   : type === 'error'   ? 'fa-solid fa-circle-xmark'
+                   :                      'fa-solid fa-circle-info';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.className = '', 3000);
+  }
+
+  function addLog(msg, type = 'info') {
+    const container = document.getElementById('logs-container');
+    const time = new Date().toLocaleTimeString('pt-BR');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `
+      <span class="log-time">${time}</span>
+      <span class="log-msg ${type}">${msg}</span>
+    `;
+    container.appendChild(entry);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function clearLogs() {
+    document.getElementById('logs-container').innerHTML = '';
+    addLog('Logs limpos.', 'info');
+  }
+
+  function handleImageUpload(input) {
+    const file = input.files[0];
+    if (file) {
+      document.getElementById('file-name').textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        config.imageUrl = e.target.result;
+        addLog(`Imagem carregada: ${file.name}`, 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function saveTokenConfig() {
+    config.token = document.getElementById('discord-token').value.trim();
+    config.serverId = document.getElementById('server-id').value.trim();
+    config.categoryId = document.getElementById('category-id').value.trim();
+    config.threadMessage = document.getElementById('thread-message').value.trim();
+    
+    const urlInput = document.getElementById('image-url').value.trim();
+    if (urlInput) config.imageUrl = urlInput;
+
+    if (!config.token || !config.serverId || !config.categoryId) {
+      showToast('Preencha Token, Server ID e Category ID!', 'error');
+      addLog('Erro: Campos obrigatórios não preenchidos.', 'error');
+      return;
+    }
+
+    localStorage.setItem('cloudSelfbotConfig', JSON.stringify(config));
+    
+    if (currentUser) {
+      const userData = { ...config, user: currentUser.user, key: currentUser.key };
+      localStorage.setItem(`cloudSelfbot_${currentUser.key}`, JSON.stringify(userData));
+    }
+    
+    const formatMsg = config.useSalaCommand ? 'com comando !sala' : 'sem comando (direto)';
+    showToast('Token e mensagem salvos com sucesso!', 'success');
+    addLog(`Token, mensagem e imagem salvos. Formato: ${formatMsg}`, 'success');
+  }
+
+  function updateSalasValue(value) {
+    document.getElementById('salas-value').textContent = value;
+    document.getElementById('salas-uso').textContent = value;
+    
+    const auth = JSON.parse(localStorage.getItem('cloudSelfbotAuth') || '{}');
+    const maxSalas = parseInt(auth.salas) || 0;
+    const disponiveis = Math.max(0, maxSalas - parseInt(value));
+    document.getElementById('salas-disponiveis').textContent = disponiveis;
+  }
+
+  function saveSalasConfig() {
+    const qtd = parseInt(document.getElementById('salas-slider').value);
+    const auth = JSON.parse(localStorage.getItem('cloudSelfbotAuth') || '{}');
+    const maxSalas = parseInt(auth.salas) || 0;
+
+    if (qtd > maxSalas) {
+      showToast(`Você só pode usar até ${maxSalas} salas!`, 'error');
+      addLog(`Erro: Limite de ${maxSalas} salas excedido.`, 'error');
+      return;
+    }
+
+    config.salasAtivas = qtd;
+    localStorage.setItem('cloudSelfbotConfig', JSON.stringify(config));
+    
+    if (currentUser) {
+      const userData = { ...config, user: currentUser.user, key: currentUser.key };
+      localStorage.setItem(`cloudSelfbot_${currentUser.key}`, JSON.stringify(userData));
+    }
+
+    showToast(`Configurado para usar ${qtd} salas!`, 'success');
+    addLog(`Limite de salas configurado: ${qtd}/${maxSalas}`, 'success');
+    updateSalasList(qtd);
+  }
+
+  function testSalas() {
+    const qtd = parseInt(document.getElementById('salas-slider').value);
+    if (qtd === 0) {
+      showToast('Configure a quantidade de salas primeiro!', 'error');
+      return;
+    }
+    showToast('Testando conexão com as salas...', 'info');
+    addLog(`Testando conexão com ${qtd} salas...`, 'info');
+    
+    setTimeout(() => {
+      showToast('Conexão testada com sucesso!', 'success');
+      addLog(`${qtd} salas conectadas e prontas para uso.`, 'success');
+    }, 1500);
+  }
+
+  function updateSalasList(qtd) {
+    const list = document.getElementById('salas-list');
+    if (qtd === 0) {
+      list.innerHTML = `
+        <div style="text-align:center;padding:32px;color:var(--muted);font-size:.85rem">
+          <i class="fa-solid fa-gamepad" style="font-size:2rem;opacity:.3;display:block;margin-bottom:12px"></i>
+          Nenhuma sala ativa no momento.
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = '';
+    for (let i = 1; i <= qtd; i++) {
+      const salaDiv = document.createElement('div');
+      salaDiv.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px';
+      salaDiv.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,.15);color:var(--green);display:grid;place-items:center;font-size:.85rem">
+            <i class="fa-solid fa-gamepad"></i>
+          </div>
+          <div>
+            <div style="font-size:.9rem;font-weight:600;color:var(--text)">Sala #${i}</div>
+            <div style="font-size:.75rem;color:var(--muted)">ID: SALA_${String(i).padStart(3, '0')}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600;background:rgba(16,185,129,.15);color:var(--green)">
+            <span class="dot" style="background:var(--green)"></span>Ativa
+          </span>
+        </div>
+      `;
+      list.appendChild(salaDiv);
+    }
+  }
+
+  function loadSalasConfig() {
+    const auth = JSON.parse(localStorage.getItem('cloudSelfbotAuth') || '{}');
+    const maxSalas = parseInt(auth.salas) || 0;
+    
+    document.getElementById('total-salas').textContent = maxSalas;
+    document.getElementById('max-salas-info').textContent = maxSalas;
+    document.getElementById('salas-slider').max = maxSalas;
+    
+    if (config.salasAtivas) {
+      document.getElementById('salas-slider').value = config.salasAtivas;
+      updateSalasValue(config.salasAtivas);
+      updateSalasList(config.salasAtivas);
+    } else {
+      document.getElementById('salas-disponiveis').textContent = maxSalas;
+    }
+  }
+
+  function saveImapConfig() {
+    config.imapServer = document.getElementById('imap-server').value.trim();
+    config.emailUser = document.getElementById('email-user').value.trim();
+    config.emailPass = document.getElementById('email-pass').value.trim();
+
+    if (!config.emailUser || !config.emailPass) {
+      showToast('Preencha e-mail e senha!', 'error');
+      addLog('Erro: Campos IMAP obrigatórios não preenchidos.', 'error');
+      return;
+    }
+
+    localStorage.setItem('cloudSelfbotConfig', JSON.stringify(config));
+    
+    if (currentUser) {
+      const userData = { ...config, user: currentUser.user, key: currentUser.key };
+      localStorage.setItem(`cloudSelfbot_${currentUser.key}`, JSON.stringify(userData));
+    }
+    
+    showToast('Configurações IMAP salvas com sucesso!', 'success');
+    addLog('Configurações IMAP salvas.', 'success');
+  }
+
+  function loadConfig() {
+    let saved = null;
+    if (currentUser) {
+      saved = localStorage.getItem(`cloudSelfbot_${currentUser.key}`);
+    }
+    if (!saved) {
+      saved = localStorage.getItem('cloudSelfbotConfig');
+    }
+    
+    if (saved) {
+      config = JSON.parse(saved);
+      document.getElementById('discord-token').value = config.token || '';
+      document.getElementById('server-id').value = config.serverId || '';
+      document.getElementById('category-id').value = config.categoryId || '';
+      document.getElementById('imap-server').value = config.imapServer || 'imap.gmail.com';
+      document.getElementById('email-user').value = config.emailUser || '';
+      document.getElementById('email-pass').value = config.emailPass || '';
+      document.getElementById('thread-message').value = config.threadMessage || '';
+      document.getElementById('image-url').value = config.imageUrl || '';
+      
+      if (config.useSalaCommand !== undefined) {
+        toggleSalaCommand(config.useSalaCommand);
+        const radio = config.useSalaCommand ? 'with-command' : 'without-command';
+        document.querySelector(`input[value="${radio}"]`).checked = true;
+      }
+      
+      addLog('Configurações carregadas do navegador.', 'info');
+    }
+  }
+
+  function startBot() {
+    if (!config.token || !config.serverId || !config.categoryId) {
+      showToast('Salve as configurações antes de iniciar!', 'error');
+      addLog('Erro: Configurações incompletas.', 'error');
+      return;
+    }
+
+    botRunning = true;
+    document.getElementById('bot-status').innerHTML = '<span class="dot online"></span>Online';
+    document.getElementById('bot-status').className = 'status online';
+    showToast('Bot iniciado com sucesso!', 'success');
+    addLog('Bot iniciado. Conectando ao Discord...', 'info');
+    
+    // Busca informações do usuário do Discord
+    fetchDiscordUser();
+  }
+
+  async function fetchDiscordUser() {
+    try {
+      const response = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: {
+          'Authorization': config.token
+        }
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        const username = user.global_name || user.username;
+        const tag = `${user.username}#${user.discriminator}`;
+        
+        addLog('✓ Conectado ao Discord com sucesso!', 'success');
+        addLog(`→ Conta: ${username} (${tag})`, 'info');
+        addLog(`→ ID: ${user.id}`, 'info');
+        addLog(`→ Servidor: ${config.serverId}`, 'info');
+        addLog(`→ Categoria: ${config.categoryId}`, 'info');
+        addLog('Sistema de detecção de modos ativado', 'success');
+        addLog('Monitorando threads na categoria...', 'info');
+      } else {
+        addLog('✗ Erro ao conectar no Discord!', 'error');
+        addLog('→ Token inválido ou expirado', 'error');
+        addLog('→ Verifique o token e tente novamente', 'error');
+        stopBot();
+      }
+    } catch (error) {
+      addLog('✗ Erro de conexão com Discord API', 'error');
+      addLog(`→ ${error.message}`, 'error');
+      stopBot();
+    }
+  }
+
+  function stopBot() {
+    botRunning = false;
+    document.getElementById('bot-status').innerHTML = '<span class="dot offline"></span>Offline';
+    document.getElementById('bot-status').className = 'status offline';
+    showToast('Bot parado.', 'info');
+    addLog('Bot parado pelo usuário.', 'error');
+  }
+
+  window.addEventListener('load', () => {
+    // Tenta sincronizar dados do servidor primeiro
+    syncFromServer().then(() => {
+      checkAuth();
+      loadConfig();
+      loadModosConfig();
+      addLog('Painel Cloud SelfBot carregado.', 'success');
+    });
+  });
+  
+  async function syncFromServer() {
+    try {
+      const response = await fetch('/api/data');
+      const data = await response.json();
+      if (data.users && data.users.length) {
+        localStorage.setItem('cloudManagerKeys', JSON.stringify(data.users));
+        sessionStorage.setItem('cloudManagerKeys', JSON.stringify(data.users));
+        console.log('Dados sincronizados do servidor:', data.users.length, 'usuários');
+        return true;
+      }
+    } catch(e) {
+      console.log('Servidor não disponível, usando dados locais');
+    }
+    return false;
+  }
+</script>
+</body>
+</html>

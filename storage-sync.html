@@ -1,0 +1,29 @@
+<script>
+// Substituir localStorage por API
+const originalSetItem = localStorage.setItem;
+const originalGetItem = localStorage.getItem;
+
+localStorage.setItem = function(key, value) {
+  if (key === 'cloudManagerKeys') {
+    fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users: JSON.parse(value), rooms: [] })
+    });
+  }
+  originalSetItem.call(this, key, value);
+};
+
+localStorage.getItem = async function(key) {
+  if (key === 'cloudManagerKeys') {
+    try {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      return JSON.stringify(data.users || []);
+    } catch (e) {
+      return originalGetItem.call(this, key);
+    }
+  }
+  return originalGetItem.call(this, key);
+};
+</script>
