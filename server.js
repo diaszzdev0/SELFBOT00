@@ -103,6 +103,25 @@ app.delete('/api/rooms/:id', async (req, res) => {
   }
 });
 
+// API - User Configs
+app.get('/api/config/:key', async (req, res) => {
+  try {
+    const config = await db.getUserConfig(req.params.key);
+    res.json(config || {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/config/:key', async (req, res) => {
+  try {
+    const config = await db.saveUserConfig(req.params.key, req.body);
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Iniciar servidor
 db.initDB().then(() => {
   app.listen(PORT, () => {
