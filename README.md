@@ -2,6 +2,24 @@
 
 Sistema completo de gerenciamento de selfbots do Discord com painel administrativo, painel cliente e banco de dados PostgreSQL (Neon).
 
+## ✅ Última Atualização (v1.1.0)
+
+**Correções Aplicadas:**
+- ✓ Bot agora envia mensagens nas threads corretamente (adicionado `thread.join()`)
+- ✓ Comando `pg Nome` funciona com 1 ou mais palavras
+- ✓ Logs detalhados em todas as operações
+- ✓ Tratamento de erros adequado
+
+**Comandos que funcionam:**
+- `pg João` ✓
+- `pago Maria` ✓
+- `pg João Silva` ✓
+- `PG JOÃO` ✓
+
+📖 **Documentação:** Veja [GUIA_RAPIDO.md](GUIA_RAPIDO.md) para deploy rápido
+
+---
+
 ## 🚀 Funcionalidades
 
 ### Painel Admin (`/`)
@@ -51,6 +69,11 @@ Acesse:
 
 ## 🌐 Deploy
 
+### Guia Rápido
+➡️ **[GUIA_RAPIDO.md](GUIA_RAPIDO.md)** - Deploy em 5 minutos
+➡️ **[DEPLOY_INSTRUCTIONS.md](DEPLOY_INSTRUCTIONS.md)** - Guia completo passo a passo
+➡️ **[CORRECOES_APLICADAS.md](CORRECOES_APLICADAS.md)** - Detalhes técnicos das correções
+
 ### GitHub + Neon
 1. Faça push do código para o GitHub
 2. O Neon já está vinculado automaticamente
@@ -60,6 +83,14 @@ Acesse:
 1. Configure a variável de ambiente `DATABASE_URL`
 2. Faça upload dos arquivos
 3. Inicie a aplicação
+
+### Bot Python
+```bash
+pip install -r requirements.txt
+python bot.py
+```
+
+**Importante:** O bot Python precisa rodar separadamente do servidor Node.js.
 
 ## 🗄️ Banco de Dados
 
@@ -82,11 +113,39 @@ Veja [NEON_SETUP.md](NEON_SETUP.md) para detalhes.
 
 ## 🛠️ Tecnologias
 
+**Backend:**
 - Node.js + Express
+- Python 3.x + discord.py-self
+- PostgreSQL (Neon)
+
+**Frontend:**
 - HTML5 + CSS3 + JavaScript
 - LocalStorage para persistência
-- Discord API
+
+**Integrações:**
+- Discord API (SelfBot)
+- IMAP (Gmail)
 - SalasFF API
+
+## 🧪 Testes
+
+Execute os testes para validar as correções:
+
+```bash
+python test_simples.py
+```
+
+**Resultado esperado:**
+- ✓ 14/15 testes de padrões de comando (93%)
+- ✓ 6/6 testes de extração de nome (100%)
+
+## 📚 Documentação
+
+- **[GUIA_RAPIDO.md](GUIA_RAPIDO.md)** - Deploy rápido em 5 minutos
+- **[DEPLOY_INSTRUCTIONS.md](DEPLOY_INSTRUCTIONS.md)** - Guia completo de deploy
+- **[CORRECOES_APLICADAS.md](CORRECOES_APLICADAS.md)** - Detalhes técnicos
+- **[RESUMO_DEPLOY.md](RESUMO_DEPLOY.md)** - Resumo executivo
+- **[NEON_SETUP.md](NEON_SETUP.md)** - Configuração do banco de dados
 
 ## 📄 Licença
 
