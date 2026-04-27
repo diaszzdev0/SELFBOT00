@@ -2,19 +2,21 @@
 
 Sistema completo de gerenciamento de selfbots do Discord com painel administrativo, painel cliente e banco de dados PostgreSQL (Neon).
 
-## ✅ Última Atualização (v1.1.0)
+## ✅ Última Atualização (v1.3.0)
 
 **Correções Aplicadas:**
 - ✓ Bot agora envia mensagens nas threads corretamente (adicionado `thread.join()`)
 - ✓ Comando `pg Nome` funciona com 1 ou mais palavras
 - ✓ Logs detalhados em todas as operações
 - ✓ Tratamento de erros adequado
+- ✓ **NOVO:** Comando `!comando` para enviar instruções de verificação
 
 **Comandos que funcionam:**
 - `pg João` ✓
 - `pago Maria` ✓
 - `pg João Silva` ✓
 - `PG JOÃO` ✓
+- `!comando` ✓ (apenas para o dono do selfbot)
 
 📖 **Documentação:** Veja [GUIA_RAPIDO.md](GUIA_RAPIDO.md) para deploy rápido
 
@@ -146,6 +148,8 @@ python test_simples.py
 - **[CORRECOES_APLICADAS.md](CORRECOES_APLICADAS.md)** - Detalhes técnicos
 - **[RESUMO_DEPLOY.md](RESUMO_DEPLOY.md)** - Resumo executivo
 - **[NEON_SETUP.md](NEON_SETUP.md)** - Configuração do banco de dados
+- **[COMANDO_INSTRUCOES.md](COMANDO_INSTRUCOES.md)** - Comando !comando para instruções
+- **[TROUBLESHOOTING_THREADS.md](TROUBLESHOOTING_THREADS.md)** - Solução de problemas
 
 ## 📄 Licença
 
