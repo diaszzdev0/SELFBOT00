@@ -2,6 +2,7 @@ import asyncio
 import imaplib
 import email
 import random
+import re
 from datetime import datetime
 
 import discord
@@ -30,46 +31,57 @@ used_transaction_ids: set[str] = set()
 def _search_payment_sync(name: str) -> dict | None:
     """Runs in a thread. Returns payment info dict or None."""
     today = datetime.now(SP_TZ).strftime("%d-%b-%Y")
+    print(f"📧 Conectando ao IMAP {IMAP_HOST}...")
 
-    with imaplib.IMAP4_SSL(IMAP_HOST) as mail:
-        mail.login(EMAIL_USER, EMAIL_PASS)
-        mail.select("INBOX")
+    try:
+        with imaplib.IMAP4_SSL(IMAP_HOST) as mail:
+            mail.login(EMAIL_USER, EMAIL_PASS)
+            mail.select("INBOX")
+            print(f"✅ Conectado ao email {EMAIL_USER}")
 
-        # Filter emails received today
-        _, data = mail.search(None, f'(SINCE "{today}")')
-        ids = data[0].split()
+            # Filter emails received today
+            _, data = mail.search(None, f'(SINCE "{today}")')
+            ids = data[0].split()
+            print(f"📨 Encontrados {len(ids)} emails de hoje ({today})")
 
-        for eid in reversed(ids):  # newest first
-            _, msg_data = mail.fetch(eid, "(RFC822)")
-            msg = email.message_from_bytes(msg_data[0][1])
+            for eid in reversed(ids):  # newest first
+                _, msg_data = mail.fetch(eid, "(RFC822)")
+                msg = email.message_from_bytes(msg_data[0][1])
 
-            body = ""
-            if msg.is_multipart():
-                for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        body += part.get_payload(decode=True).decode(errors="ignore")
-            else:
-                body = msg.get_payload(decode=True).decode(errors="ignore")
+                body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        if part.get_content_type() == "text/plain":
+                            body += part.get_payload(decode=True).decode(errors="ignore")
+                else:
+                    body = msg.get_payload(decode=True).decode(errors="ignore")
 
-            if name.lower() not in body.lower():
-                continue
+                if name.lower() not in body.lower():
+                    continue
+                
+                print(f"✅ Nome '{name}' encontrado no email!")
 
-            # Generate unique transaction ID based on email content
-            tx_id = str(abs(hash(body[:200])))[:12]
+                # Generate unique transaction ID based on email content
+                tx_id = str(abs(hash(body[:200])))[:12]
 
-            # Extract amount
-            amount_match = re.search(r"R\$\s?[\d.,]+", body)
-            amount = amount_match.group(0) if amount_match else "N/A"
+                # Extract amount
+                amount_match = re.search(r"R\$\s?[\d.,]+", body)
+                amount = amount_match.group(0) if amount_match else "N/A"
 
-            # Extract sender/origin
-            origin = msg.get("From", "Desconhecido")
+                # Extract sender/origin
+                origin = msg.get("From", "Desconhecido")
 
-            return {
-                "tx_id":  tx_id,
-                "amount": amount,
-                "origin": origin,
-                "name":   name,
-            }
+                return {
+                    "tx_id":  tx_id,
+                    "amount": amount,
+                    "origin": origin,
+                    "name":   name,
+                }
+            
+            print(f"❌ Nome '{name}' não encontrado em nenhum email de hoje")
+    except Exception as e:
+        print(f"❌ Erro ao buscar email: {e}")
+        return None
 
     return None
 
@@ -89,20 +101,27 @@ class SelfBot(discord.Client):
             return
 
         await asyncio.sleep(9)
+        
+        try:
+            # Join the thread first (required for selfbots)
+            await thread.join()
+            
+            file = None
+            if THREAD_IMAGE:
+                if THREAD_IMAGE.startswith(("http://", "https://")):
+                    import urllib.request, tempfile
+                    ext = os.path.splitext(THREAD_IMAGE.split("?")[0])[1] or ".jpg"
+                    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+                    await asyncio.to_thread(urllib.request.urlretrieve, THREAD_IMAGE, tmp.name)
+                    file = discord.File(tmp.name, filename=f"painel{ext}")
+                else:
+                    ext = os.path.splitext(THREAD_IMAGE)[1]
+                    file = discord.File(THREAD_IMAGE, filename=f"painel{ext}")
 
-        file = None
-        if THREAD_IMAGE:
-            if THREAD_IMAGE.startswith(("http://", "https://")):
-                import urllib.request, tempfile
-                ext = os.path.splitext(THREAD_IMAGE.split("?")[0])[1] or ".jpg"
-                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-                await asyncio.to_thread(urllib.request.urlretrieve, THREAD_IMAGE, tmp.name)
-                file = discord.File(tmp.name, filename=f"painel{ext}")
-            else:
-                ext = os.path.splitext(THREAD_IMAGE)[1]
-                file = discord.File(THREAD_IMAGE, filename=f"painel{ext}")
-
-        await thread.send(THREAD_MESSAGE, file=file)
+            await thread.send(THREAD_MESSAGE, file=file)
+            print(f"✓ Mensagem enviada na thread: {thread.name}")
+        except Exception as e:
+            print(f"✗ Erro ao enviar mensagem na thread {thread.name}: {e}")
 
     # ── Payment command ───────────────────────────────────────────────────────
     async def on_message(self, message: discord.Message):
@@ -110,17 +129,27 @@ class SelfBot(discord.Client):
             return
 
         content = message.content.strip()
-        if not re.match(r"^(pg|pago)\s+\S+\s+\S+", content, re.IGNORECASE):
+        print(f"📨 Mensagem recebida: '{content}' de {message.author}")
+        
+        # Aceita: "pg Nome", "pago Nome", "pg Nome Sobrenome", "pago Nome Sobrenome"
+        if not re.match(r"^(pg|pago)\s+\S+", content, re.IGNORECASE):
             return
 
         parts = content.split(maxsplit=1)
-        name  = parts[1].strip()  # "Nome Sobrenome"
+        if len(parts) < 2:
+            return
+        
+        name  = parts[1].strip()  # "Nome" ou "Nome Sobrenome"
+        print(f"🔍 Verificando pagamento para: {name}")
 
         # Reply with "checking" message
         checking_msg = await message.reply("🕒 Verificando pagamento… aguarde!")
+        print(f"⏳ Buscando pagamento no email para: {name}")
 
         # IMAP search in thread pool (non-blocking)
         result = await asyncio.to_thread(_search_payment_sync, name)
+        
+        print(f"📧 Resultado da busca: {result}")
 
         # Delete the "checking" message
         try:
@@ -129,10 +158,12 @@ class SelfBot(discord.Client):
             pass
 
         if result is None:
+            print(f"❌ Pagamento não encontrado para: {name}")
             await message.reply("🚫 Este pagamento não foi encontrado!")
             return
 
         tx_id = result["tx_id"]
+        print(f"✅ Pagamento encontrado! TX ID: {tx_id}")
 
         # Anti-fraud check
         if tx_id and tx_id in used_transaction_ids:
