@@ -153,64 +153,113 @@ class SelfBot(discord.Client):
 
     # ── Payment command ───────────────────────────────────────────────────────
     async def on_message(self, message: discord.Message):
-        if message.author == self.user:
-            return
+        # Ignora mensagens de outros usuários que não sejam comandos
+        if message.author != self.user:
+            content = message.content.strip()
+            print(f"📨 Mensagem recebida: '{content}' de {message.author}")
+            
+            # Aceita: "pg Nome", "pago Nome", "pg Nome Sobrenome", "pago Nome Sobrenome"
+            if not re.match(r"^(pg|pago)\s+\S+", content, re.IGNORECASE):
+                return
 
-        content = message.content.strip()
-        print(f"📨 Mensagem recebida: '{content}' de {message.author}")
-        
-        # Aceita: "pg Nome", "pago Nome", "pg Nome Sobrenome", "pago Nome Sobrenome"
-        if not re.match(r"^(pg|pago)\s+\S+", content, re.IGNORECASE):
-            return
+            parts = content.split(maxsplit=1)
+            if len(parts) < 2:
+                return
+            
+            name  = parts[1].strip()  # "Nome" ou "Nome Sobrenome"
+            print(f"🔍 Verificando pagamento para: {name}")
 
-        parts = content.split(maxsplit=1)
-        if len(parts) < 2:
-            return
-        
-        name  = parts[1].strip()  # "Nome" ou "Nome Sobrenome"
-        print(f"🔍 Verificando pagamento para: {name}")
+            # Reply with "checking" message
+            checking_msg = await message.reply("🕒 Verificando pagamento… aguarde!")
+            print(f"⏳ Buscando pagamento no email para: {name}")
 
-        # Reply with "checking" message
-        checking_msg = await message.reply("🕒 Verificando pagamento… aguarde!")
-        print(f"⏳ Buscando pagamento no email para: {name}")
+            # IMAP search in thread pool (non-blocking)
+            result = await asyncio.to_thread(_search_payment_sync, name)
+            
+            print(f"📧 Resultado da busca: {result}")
 
-        # IMAP search in thread pool (non-blocking)
-        result = await asyncio.to_thread(_search_payment_sync, name)
-        
-        print(f"📧 Resultado da busca: {result}")
+            # Delete the "checking" message
+            try:
+                await checking_msg.delete()
+            except discord.HTTPException:
+                pass
 
-        # Delete the "checking" message
-        try:
-            await checking_msg.delete()
-        except discord.HTTPException:
-            pass
+            if result is None:
+                print(f"❌ Pagamento não encontrado para: {name}")
+                await message.reply("🚫 Este pagamento não foi encontrado!")
+                return
 
-        if result is None:
-            print(f"❌ Pagamento não encontrado para: {name}")
-            await message.reply("🚫 Este pagamento não foi encontrado!")
-            return
+            tx_id = result["tx_id"]
+            print(f"✅ Pagamento encontrado! TX ID: {tx_id}")
 
-        tx_id = result["tx_id"]
-        print(f"✅ Pagamento encontrado! TX ID: {tx_id}")
+            # Anti-fraud check
+            if tx_id and tx_id in used_transaction_ids:
+                await message.reply(
+                    "⚠️ Atenção- este pagamento já foi utilizado em outro tópico"
+                )
+                return
 
-        # Anti-fraud check
-        if tx_id and tx_id in used_transaction_ids:
+            if tx_id:
+                used_transaction_ids.add(tx_id)
+
+            bot_id = random.randint(1000, 9999)
             await message.reply(
-                "⚠️ Atenção- este pagamento já foi utilizado em outro tópico"
+                f"✅ Pagamento confirmado!\n"
+                f"**Origem:** {result['origin']}\n"
+                f"**Nome:** {result['name']}\n"
+                f"**Valor:** {result['amount']}\n"
+                f"**ID:** #{bot_id}"
             )
             return
-
-        if tx_id:
-            used_transaction_ids.add(tx_id)
-
-        bot_id = random.randint(1000, 9999)
-        await message.reply(
-            f"✅ Pagamento confirmado!\n"
-            f"**Origem:** {result['origin']}\n"
-            f"**Nome:** {result['name']}\n"
-            f"**Valor:** {result['amount']}\n"
-            f"**ID:** #{bot_id}"
-        )
+        
+        # ── Comando !comando (apenas para o dono do selfbot) ──────────────────
+        if message.author == self.user:
+            content = message.content.strip()
+            
+            # Verifica se é o comando !comando
+            if not content.lower() == "!comando":
+                return
+            
+            # Verifica se está em uma thread
+            if not isinstance(message.channel, discord.Thread):
+                print(f"⚠️  Comando !comando usado fora de uma thread")
+                return
+            
+            thread = message.channel
+            
+            # Verifica se a thread está na categoria configurada
+            if not (thread.parent and thread.parent.category_id == CATEGORY_ID):
+                print(f"⚠️  Comando !comando usado em thread fora da categoria monitorada")
+                return
+            
+            print(f"📋 Comando !comando executado na thread: {thread.name}")
+            
+            # Deleta a mensagem do comando
+            try:
+                await message.delete()
+            except discord.HTTPException:
+                pass
+            
+            # Envia as instruções
+            instrucoes = (
+                "📋 **Como verificar seu pagamento:**\n\n"
+                "Para verificar seu pagamento, envie o comando:\n"
+                "```\n"
+                "pg Nome Sobrenome\n"
+                "```\n"
+                "ou\n"
+                "```\n"
+                "pago Nome Sobrenome\n"
+                "```\n\n"
+                "**Exemplos:**\n"
+                "• `pg João Silva`\n"
+                "• `pago Maria Santos`\n"
+                "• `pg Pedro`\n\n"
+                "⚠️ **Importante:** Use o nome que está no comprovante de pagamento!"
+            )
+            
+            await thread.send(instrucoes)
+            print(f"✅ Instruções enviadas na thread: {thread.name}")
 
 
 # ── Periodic task ─────────────────────────────────────────────────────────────
