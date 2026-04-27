@@ -4,7 +4,6 @@ import email
 import random
 import re
 from datetime import datetime
-
 import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
@@ -13,41 +12,30 @@ import pytz
 
 load_dotenv()
 
-TOKEN       = os.getenv("DISCORD_TOKEN")
-SERVER_ID   = int(os.getenv("SERVER_ID"))
-CATEGORY_ID = int(os.getenv("CATEGORY_ID"))
-EMAIL_USER      = os.getenv("EMAIL_USER")
-EMAIL_PASS      = os.getenv("EMAIL_PASS")
-THREAD_MESSAGE  = os.getenv("THREAD_MESSAGE", "Olá! Digite: pago Nome Sobrenome para validar seu pagamento de hoje.")
-THREAD_IMAGE    = os.getenv("THREAD_IMAGE", "").strip()  # caminho local ou URL
+DATABASE_URL = os.getenv("DATABASE_URL")
+SP_TZ = pytz.timezone("America/Sao_Paulo")
 
-IMAP_HOST = os.getenv("IMAP_SERVER", "imap.gmail.com")
-SP_TZ     = pytz.timezone("America/Sao_Paulo")
+# Armazena instâncias de bots por user_key
+bot_instances = {}
+user_configs = {}
+used_transaction_ids = {}
 
-used_transaction_ids: set[str] = set()
-
-# ── IMAP helper ──────────────────────────────────────────────────────────────
-
-def _search_payment_sync(name: str) -> dict | None:
-    """Runs in a thread. Returns payment info dict or None."""
+# Função para buscar pagamento no email
+def _search_payment_sync(name: str, email_user: str, email_pass: str, imap_server: str) -> dict | None:
     today = datetime.now(SP_TZ).strftime("%d-%b-%Y")
-    print(f"📧 Conectando ao IMAP {IMAP_HOST}...")
-
+    
     try:
-        with imaplib.IMAP4_SSL(IMAP_HOST) as mail:
-            mail.login(EMAIL_USER, EMAIL_PASS)
+        with imaplib.IMAP4_SSL(imap_server) as mail:
+            mail.login(email_user, email_pass)
             mail.select("INBOX")
-            print(f"✅ Conectado ao email {EMAIL_USER}")
-
-            # Filter emails received today
+            
             _, data = mail.search(None, f'(SINCE "{today}")')
             ids = data[0].split()
-            print(f"📨 Encontrados {len(ids)} emails de hoje ({today})")
-
-            for eid in reversed(ids):  # newest first
+            
+            for eid in reversed(ids):
                 _, msg_data = mail.fetch(eid, "(RFC822)")
                 msg = email.message_from_bytes(msg_data[0][1])
-
+                
                 body = ""
                 if msg.is_multipart():
                     for part in msg.walk():
@@ -55,153 +43,117 @@ def _search_payment_sync(name: str) -> dict | None:
                             body += part.get_payload(decode=True).decode(errors="ignore")
                 else:
                     body = msg.get_payload(decode=True).decode(errors="ignore")
-
+                
                 if name.lower() not in body.lower():
                     continue
                 
-                print(f"✅ Nome '{name}' encontrado no email!")
-
-                # Generate unique transaction ID based on email content
                 tx_id = str(abs(hash(body[:200])))[:12]
-
-                # Extract amount
                 amount_match = re.search(r"R\$\s?[\d.,]+", body)
                 amount = amount_match.group(0) if amount_match else "N/A"
-
-                # Extract sender/origin
                 origin = msg.get("From", "Desconhecido")
-
+                
                 return {
-                    "tx_id":  tx_id,
+                    "tx_id": tx_id,
                     "amount": amount,
                     "origin": origin,
-                    "name":   name,
+                    "name": name,
                 }
-            
-            print(f"❌ Nome '{name}' não encontrado em nenhum email de hoje")
     except Exception as e:
-        print(f"❌ Erro ao buscar email: {e}")
-        return None
-
+        print(f"Erro ao buscar email: {e}")
+    
     return None
 
-
-# ── Bot ───────────────────────────────────────────────────────────────────────
-
-class SelfBot(discord.Client):
+# Classe do SelfBot
+class UserSelfBot(discord.Client):
+    def __init__(self, user_key, config):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(intents=intents)
+        
+        self.user_key = user_key
+        self.config = config
+        self.server_id = int(config['server_id'])
+        self.category_id = int(config['category_id'])
+        
+        if user_key not in used_transaction_ids:
+            used_transaction_ids[user_key] = set()
+    
     async def on_ready(self):
-        print(f"✅ Logged in as {self.user}")
-        print(f"📋 Monitorando servidor ID: {SERVER_ID}")
-        print(f"📋 Monitorando categoria ID: {CATEGORY_ID}")
-        print(f"💬 Mensagem configurada: {THREAD_MESSAGE[:50]}...")
-        print(f"🖼️  Imagem configurada: {THREAD_IMAGE if THREAD_IMAGE else 'Nenhuma'}")
-        print("⏳ Aguardando criação de threads...")
-        clear_tx_ids.start()
-
-    # ── New thread greeting ───────────────────────────────────────────────────
+        print(f"✅ Bot conectado: {self.user} (User: {self.user_key})")
+        print(f"   Server: {self.server_id}, Category: {self.category_id}")
+    
     async def on_thread_create(self, thread: discord.Thread):
-        print(f"\n🆕 Thread criada detectada: {thread.name}")
-        print(f"   Guild ID: {thread.guild.id} (esperado: {SERVER_ID})")
-        
-        if thread.guild.id != SERVER_ID:
-            print(f"   ❌ Guild ID não corresponde. Ignorando.")
+        if thread.guild.id != self.server_id:
             return
         
-        print(f"   Parent: {thread.parent}")
-        if thread.parent:
-            print(f"   Category ID: {thread.parent.category_id} (esperado: {CATEGORY_ID})")
-        
-        if not (thread.parent and thread.parent.category_id == CATEGORY_ID):
-            print(f"   ❌ Categoria não corresponde. Ignorando.")
+        if not (thread.parent and thread.parent.category_id == self.category_id):
             return
-
-        print(f"   ✅ Thread válida! Aguardando 9 segundos...")
+        
         await asyncio.sleep(9)
         
         try:
-            print(f"   🔗 Entrando na thread...")
             await thread.join()
-            print(f"   ✅ Entrou na thread com sucesso!")
             
             file = None
-            if THREAD_IMAGE:
-                print(f"   🖼️  Preparando imagem: {THREAD_IMAGE}")
-                if THREAD_IMAGE.startswith(("http://", "https://")):
+            image_url = self.config.get('image_url', '').strip()
+            
+            if image_url:
+                if image_url.startswith(("http://", "https://")):
                     import urllib.request, tempfile
-                    ext = os.path.splitext(THREAD_IMAGE.split("?")[0])[1] or ".jpg"
+                    ext = os.path.splitext(image_url.split("?")[0])[1] or ".jpg"
                     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-                    await asyncio.to_thread(urllib.request.urlretrieve, THREAD_IMAGE, tmp.name)
+                    await asyncio.to_thread(urllib.request.urlretrieve, image_url, tmp.name)
                     file = discord.File(tmp.name, filename=f"painel{ext}")
-                    print(f"   ✅ Imagem baixada: {tmp.name}")
                 else:
-                    ext = os.path.splitext(THREAD_IMAGE)[1]
-                    file = discord.File(THREAD_IMAGE, filename=f"painel{ext}")
-                    print(f"   ✅ Imagem local carregada")
-
-            print(f"   📤 Enviando mensagem...")
-            await thread.send(THREAD_MESSAGE, file=file)
-            print(f"   ✅ Mensagem enviada na thread: {thread.name}")
-        except discord.Forbidden as e:
-            print(f"   ❌ Erro de permissão: {e}")
-            print(f"   ℹ️  O bot não tem permissão para enviar mensagens nesta thread")
-        except discord.HTTPException as e:
-            print(f"   ❌ Erro HTTP do Discord: {e}")
+                    ext = os.path.splitext(image_url)[1]
+                    file = discord.File(image_url, filename=f"painel{ext}")
+            
+            message = self.config.get('thread_message', 'Olá! Digite: pago Nome Sobrenome')
+            await thread.send(message, file=file)
+            print(f"✅ Mensagem enviada na thread: {thread.name}")
         except Exception as e:
-            print(f"   ❌ Erro ao enviar mensagem na thread {thread.name}: {e}")
-            import traceback
-            traceback.print_exc()
-
-    # ── Payment command ───────────────────────────────────────────────────────
+            print(f"❌ Erro ao enviar mensagem: {e}")
+    
     async def on_message(self, message: discord.Message):
-        # Ignora mensagens de outros usuários que não sejam comandos
         if message.author != self.user:
             content = message.content.strip()
-            print(f"📨 Mensagem recebida: '{content}' de {message.author}")
             
-            # Aceita: "pg Nome", "pago Nome", "pg Nome Sobrenome", "pago Nome Sobrenome"
             if not re.match(r"^(pg|pago)\s+\S+", content, re.IGNORECASE):
                 return
-
+            
             parts = content.split(maxsplit=1)
             if len(parts) < 2:
                 return
             
-            name  = parts[1].strip()  # "Nome" ou "Nome Sobrenome"
-            print(f"🔍 Verificando pagamento para: {name}")
-
-            # Reply with "checking" message
+            name = parts[1].strip()
             checking_msg = await message.reply("🕒 Verificando pagamento… aguarde!")
-            print(f"⏳ Buscando pagamento no email para: {name}")
-
-            # IMAP search in thread pool (non-blocking)
-            result = await asyncio.to_thread(_search_payment_sync, name)
             
-            print(f"📧 Resultado da busca: {result}")
-
-            # Delete the "checking" message
+            result = await asyncio.to_thread(
+                _search_payment_sync,
+                name,
+                self.config['email_user'],
+                self.config['email_pass'],
+                self.config.get('imap_server', 'imap.gmail.com')
+            )
+            
             try:
                 await checking_msg.delete()
-            except discord.HTTPException:
+            except:
                 pass
-
+            
             if result is None:
-                print(f"❌ Pagamento não encontrado para: {name}")
                 await message.reply("🚫 Este pagamento não foi encontrado!")
                 return
-
+            
             tx_id = result["tx_id"]
-            print(f"✅ Pagamento encontrado! TX ID: {tx_id}")
-
-            # Anti-fraud check
-            if tx_id and tx_id in used_transaction_ids:
-                await message.reply(
-                    "⚠️ Atenção- este pagamento já foi utilizado em outro tópico"
-                )
+            
+            if tx_id and tx_id in used_transaction_ids[self.user_key]:
+                await message.reply("⚠️ Atenção- este pagamento já foi utilizado em outro tópico")
                 return
-
+            
             if tx_id:
-                used_transaction_ids.add(tx_id)
-
+                used_transaction_ids[self.user_key].add(tx_id)
+            
             bot_id = random.randint(1000, 9999)
             await message.reply(
                 f"✅ Pagamento confirmado!\n"
@@ -210,66 +162,61 @@ class SelfBot(discord.Client):
                 f"**Valor:** {result['amount']}\n"
                 f"**ID:** #{bot_id}"
             )
-            return
+
+# Carregar configurações do banco
+async def load_configs_from_db():
+    if not DATABASE_URL:
+        print("❌ DATABASE_URL não configurada")
+        return
+    
+    try:
+        import asyncpg
+        conn = await asyncpg.connect(DATABASE_URL)
         
-        # ── Comando !comando (apenas para o dono do selfbot) ──────────────────
-        if message.author == self.user:
-            content = message.content.strip()
-            
-            # Verifica se é o comando !comando
-            if not content.lower() == "!comando":
-                return
-            
-            # Verifica se está em uma thread
-            if not isinstance(message.channel, discord.Thread):
-                print(f"⚠️  Comando !comando usado fora de uma thread")
-                return
-            
-            thread = message.channel
-            
-            # Verifica se a thread está na categoria configurada
-            if not (thread.parent and thread.parent.category_id == CATEGORY_ID):
-                print(f"⚠️  Comando !comando usado em thread fora da categoria monitorada")
-                return
-            
-            print(f"📋 Comando !comando executado na thread: {thread.name}")
-            
-            # Deleta a mensagem do comando
-            try:
-                await message.delete()
-            except discord.HTTPException:
-                pass
-            
-            # Envia as instruções
-            instrucoes = (
-                "📋 **Como verificar seu pagamento:**\n\n"
-                "Para verificar seu pagamento, envie o comando:\n"
-                "```\n"
-                "pg Nome Sobrenome\n"
-                "```\n"
-                "ou\n"
-                "```\n"
-                "pago Nome Sobrenome\n"
-                "```\n\n"
-                "**Exemplos:**\n"
-                "• `pg João Silva`\n"
-                "• `pago Maria Santos`\n"
-                "• `pg Pedro`\n\n"
-                "⚠️ **Importante:** Use o nome que está no comprovante de pagamento!"
-            )
-            
-            await thread.send(instrucoes)
-            print(f"✅ Instruções enviadas na thread: {thread.name}")
+        rows = await conn.fetch("""
+            SELECT uc.user_key, uc.discord_token, uc.server_id, uc.category_id,
+                   uc.thread_message, uc.image_url, uc.imap_server, 
+                   uc.email_user, uc.email_pass
+            FROM user_configs uc
+            JOIN users u ON uc.user_key = u.key
+            WHERE u.expires_at > NOW()
+              AND uc.discord_token IS NOT NULL
+              AND uc.server_id IS NOT NULL
+              AND uc.category_id IS NOT NULL
+        """)
+        
+        for row in rows:
+            user_configs[row['user_key']] = {
+                'token': row['discord_token'],
+                'server_id': row['server_id'],
+                'category_id': row['category_id'],
+                'thread_message': row['thread_message'] or "Olá! Digite: pago Nome Sobrenome",
+                'image_url': row['image_url'] or "",
+                'imap_server': row['imap_server'] or "imap.gmail.com",
+                'email_user': row['email_user'],
+                'email_pass': row['email_pass']
+            }
+        
+        await conn.close()
+        print(f"✅ {len(user_configs)} configurações carregadas")
+    except Exception as e:
+        print(f"❌ Erro ao carregar configurações: {e}")
 
+# Iniciar bots
+async def start_bots():
+    await load_configs_from_db()
+    
+    tasks = []
+    for user_key, config in user_configs.items():
+        bot = UserSelfBot(user_key, config)
+        bot_instances[user_key] = bot
+        tasks.append(bot.start(config['token']))
+    
+    if tasks:
+        await asyncio.gather(*tasks)
+    else:
+        print("❌ Nenhuma configuração válida encontrada")
 
-# ── Periodic task ─────────────────────────────────────────────────────────────
-
-@tasks.loop(minutes=2)
-async def clear_tx_ids():
-    used_transaction_ids.clear()
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-client = SelfBot()
-client.run(TOKEN)
+# Executar
+if __name__ == "__main__":
+    asyncio.run(start_bots())
