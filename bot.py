@@ -68,6 +68,8 @@ class UserSelfBot(discord.Client):
     def __init__(self, user_key, config):
         intents = discord.Intents.default()
         intents.message_content = True
+        intents.guilds = True
+        intents.members = True
         super().__init__(intents=intents)
         
         self.user_key = user_key
@@ -81,38 +83,62 @@ class UserSelfBot(discord.Client):
     async def on_ready(self):
         print(f"✅ Bot conectado: {self.user} (User: {self.user_key})")
         print(f"   Server: {self.server_id}, Category: {self.category_id}")
+        print(f"   Mensagem: {self.config.get('thread_message', '')[:50]}...")
+        print(f"   Aguardando threads...")
     
     async def on_thread_create(self, thread: discord.Thread):
+        print(f"\n🆕 Thread detectada: {thread.name}")
+        print(f"   Guild: {thread.guild.id} (esperado: {self.server_id})")
+        print(f"   Parent: {thread.parent}")
+        
         if thread.guild.id != self.server_id:
+            print(f"   ❌ Guild diferente, ignorando")
             return
+        
+        if thread.parent:
+            print(f"   Category: {thread.parent.category_id} (esperado: {self.category_id})")
         
         if not (thread.parent and thread.parent.category_id == self.category_id):
+            print(f"   ❌ Categoria diferente, ignorando")
             return
         
+        print(f"   ✅ Thread válida! Aguardando 9 segundos...")
         await asyncio.sleep(9)
         
         try:
+            print(f"   🔗 Entrando na thread...")
             await thread.join()
+            print(f"   ✅ Entrou na thread!")
             
             file = None
             image_url = self.config.get('image_url', '').strip()
             
             if image_url:
+                print(f"   🖼️ Preparando imagem: {image_url}")
                 if image_url.startswith(("http://", "https://")):
                     import urllib.request, tempfile
                     ext = os.path.splitext(image_url.split("?")[0])[1] or ".jpg"
                     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
                     await asyncio.to_thread(urllib.request.urlretrieve, image_url, tmp.name)
                     file = discord.File(tmp.name, filename=f"painel{ext}")
+                    print(f"   ✅ Imagem baixada")
                 else:
                     ext = os.path.splitext(image_url)[1]
                     file = discord.File(image_url, filename=f"painel{ext}")
+                    print(f"   ✅ Imagem local carregada")
             
             message = self.config.get('thread_message', 'Olá! Digite: pago Nome Sobrenome')
+            print(f"   📤 Enviando mensagem...")
             await thread.send(message, file=file)
-            print(f"✅ Mensagem enviada na thread: {thread.name}")
+            print(f"   ✅ Mensagem enviada na thread: {thread.name}")
+        except discord.Forbidden as e:
+            print(f"   ❌ Erro de permissão: {e}")
+        except discord.HTTPException as e:
+            print(f"   ❌ Erro HTTP: {e}")
         except Exception as e:
-            print(f"❌ Erro ao enviar mensagem: {e}")
+            print(f"   ❌ Erro ao enviar mensagem: {e}")
+            import traceback
+            traceback.print_exc()
     
     async def on_message(self, message: discord.Message):
         if message.author != self.user:
